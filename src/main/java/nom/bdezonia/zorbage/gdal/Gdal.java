@@ -113,7 +113,7 @@ public class Gdal {
 					throw new IllegalArgumentException("data has multiple different band types!");
 				if ((band.GetXSize() != xSize) || (band.GetYSize() != ySize))
 					throw new IllegalArgumentException("data has multiple band resolutions!");
-				System.out.println("   band " + i + " " + type + " " + band.GetDescription());
+				System.out.println("   band " + i + " " + gdal.GetDataTypeName(type) + " " + band.GetDescription());
 			}
 			if (type == gdalconst.GDT_Byte)
 				resultSets.uint8s = Arrays.asList(loadUByteData(ds, G.UINT8.construct()));
@@ -147,7 +147,7 @@ public class Gdal {
 	}
 	
 	private static <U extends Allocatable<U>>
-		MultiDimDataSource<U> loadData(Dataset ds, U type, Procedure4<Band, Integer, Integer, U> proc)
+		MultiDimDataSource<U> loadData(Dataset ds, U var, Procedure4<Band, Integer, Integer, U> proc)
 	{
 		int planes = ds.getRasterCount();
 		long[] dims;
@@ -157,7 +157,7 @@ public class Gdal {
 		else {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
 		}
-		MultiDimDataSource<U> data = MultiDimStorage.allocate(dims, type);
+		MultiDimDataSource<U> data = MultiDimStorage.allocate(dims, var);
 		
 		long[] minPt = new long[data.numDimensions()];
 		long[] maxPt = new long[data.numDimensions()];
@@ -177,161 +177,169 @@ public class Gdal {
 			}
 			SamplingIterator<IntegerIndex> iter = grid.iterator();
 			IntegerIndex index = new IntegerIndex(data.numDimensions());
-			for (int y = 0; y < ds.GetRasterYSize(); y++) {
+			// gdal y origin is top left of raster while zorbage has it at lower left
+			for (int y = ds.GetRasterYSize()-1; y >= 0; y--) {
 				for (int x = 0; x < ds.GetRasterXSize(); x++) {
 					iter.next(index);
-					proc.call(band, x, y, type);
-					data.set(index, type);
+					proc.call(band, x, y, var);
+					data.set(index, var);
 				}				
 			}
 		}
 		return data;
 	}
 
-	private static MultiDimDataSource<UnsignedInt8Member> loadUByteData(Dataset ds, UnsignedInt8Member type) {
+	private static MultiDimDataSource<UnsignedInt8Member> loadUByteData(Dataset ds, UnsignedInt8Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt8Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt8Member>()
 		{
 			private byte[] buffer = new byte[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt8Member type) {
+			public void call(Band band, Integer x, Integer y, UnsignedInt8Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<UnsignedInt16Member> loadUShortData(Dataset ds, UnsignedInt16Member type) {
+	private static MultiDimDataSource<UnsignedInt16Member> loadUShortData(Dataset ds, UnsignedInt16Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt16Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt16Member>()
 		{
 			private short[] buffer = new short[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt16Member type) {
+			public void call(Band band, Integer x, Integer y, UnsignedInt16Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<SignedInt16Member> loadShortData(Dataset ds, SignedInt16Member type) {
+	private static MultiDimDataSource<SignedInt16Member> loadShortData(Dataset ds, SignedInt16Member var) {
 		Procedure4<Band,Integer,Integer,SignedInt16Member> proc =
 				new Procedure4<Band, Integer, Integer, SignedInt16Member>()
 		{
 			private short[] buffer = new short[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, SignedInt16Member type) {
+			public void call(Band band, Integer x, Integer y, SignedInt16Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<UnsignedInt32Member> loadUIntData(Dataset ds, UnsignedInt32Member type) {
+	private static MultiDimDataSource<UnsignedInt32Member> loadUIntData(Dataset ds, UnsignedInt32Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt32Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt32Member>()
 		{
 			private int[] buffer = new int[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt32Member type) {
+			public void call(Band band, Integer x, Integer y, UnsignedInt32Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<SignedInt32Member> loadIntData(Dataset ds, SignedInt32Member type) {
+	private static MultiDimDataSource<SignedInt32Member> loadIntData(Dataset ds, SignedInt32Member var) {
 		Procedure4<Band,Integer,Integer,SignedInt32Member> proc =
 				new Procedure4<Band, Integer, Integer, SignedInt32Member>()
 		{
 			private int[] buffer = new int[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, SignedInt32Member type) {
+			public void call(Band band, Integer x, Integer y, SignedInt32Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<Float32Member> loadFloatData(Dataset ds, Float32Member type) {
+	private static MultiDimDataSource<Float32Member> loadFloatData(Dataset ds, Float32Member var) {
 		Procedure4<Band,Integer,Integer,Float32Member> proc =
 				new Procedure4<Band, Integer, Integer, Float32Member>()
 		{
 			private float[] buffer = new float[1];
+			
 			@Override
-			public void call(Band band, Integer x, Integer y, Float32Member type) {
+			public void call(Band band, Integer x, Integer y, Float32Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<Float64Member> loadDoubleData(Dataset ds, Float64Member type) {
+	private static MultiDimDataSource<Float64Member> loadDoubleData(Dataset ds, Float64Member var) {
 		Procedure4<Band,Integer,Integer,Float64Member> proc =
 				new Procedure4<Band, Integer, Integer, Float64Member>()
 		{
 			private double[] buffer = new double[1];
+
 			@Override
-			public void call(Band band, Integer x, Integer y, Float64Member type) {
+			public void call(Band band, Integer x, Integer y, Float64Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				type.setV(buffer[0]);
+				outVal.setV(buffer[0]);
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member type) {
+	private static MultiDimDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member var) {
 		Procedure4<Band,Integer,Integer,ComplexFloat32Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat32Member>()
 		{
-			private float[] fbuffer = new float[2];
 			private short[] sbuffer = new short[2];
+			private float[] fbuffer = new float[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, ComplexFloat32Member type) {
+			public void call(Band band, Integer x, Integer y, ComplexFloat32Member outVal) {
 				if (band.getDataType() == gdalconst.GDT_CInt16) {
 					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), sbuffer, 0, 0);
-					type.setR(sbuffer[0]);
-					type.setI(sbuffer[1]);
+					outVal.setR(sbuffer[0]);
+					outVal.setI(sbuffer[1]);
 				}
 				else {  // data type = GDT_CFloat32
 					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), fbuffer, 0, 0);
-					type.setR(fbuffer[0]);
-					type.setI(fbuffer[1]);
+					outVal.setR(fbuffer[0]);
+					outVal.setI(fbuffer[1]);
 				}
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<ComplexFloat64Member> loadComplexDoubleData(Dataset ds, ComplexFloat64Member type) {
+	private static MultiDimDataSource<ComplexFloat64Member> loadComplexDoubleData(Dataset ds, ComplexFloat64Member var) {
 		Procedure4<Band,Integer,Integer,ComplexFloat64Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat64Member>()
 		{
-			private double[] dbuffer = new double[2];
 			private int[] ibuffer = new int[2];
+			private double[] dbuffer = new double[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, ComplexFloat64Member type) {
+			public void call(Band band, Integer x, Integer y, ComplexFloat64Member outVal) {
 				if (band.getDataType() == gdalconst.GDT_CInt32) {
 					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), ibuffer, 0, 0);
-					type.setR(ibuffer[0]);
-					type.setI(ibuffer[1]);
+					outVal.setR(ibuffer[0]);
+					outVal.setI(ibuffer[1]);
 				}
 				else {  // data type = GDT_CFloat64
 					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), dbuffer, 0, 0);
-					type.setR(dbuffer[0]);
-					type.setI(dbuffer[1]);
+					outVal.setR(dbuffer[0]);
+					outVal.setI(dbuffer[1]);
 				}
 			}
 		};
-		return loadData(ds, type, proc);
+		return loadData(ds, var, proc);
 	}
 	
 }
