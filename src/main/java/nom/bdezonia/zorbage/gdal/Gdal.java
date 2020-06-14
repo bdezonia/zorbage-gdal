@@ -27,8 +27,6 @@
 package nom.bdezonia.zorbage.gdal;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
@@ -62,123 +60,6 @@ import nom.bdezonia.zorbage.type.int8.UnsignedInt8Member;
 public class Gdal {
 
 	/**
-	 * 
-	 */
-	public static class DataBundle {
-		public Map<String,String> chars;
-		public List<MultiDimDataSource<UnsignedInt8Member>> uint8s;
-		public List<MultiDimDataSource<SignedInt16Member>> int16s;
-		public List<MultiDimDataSource<UnsignedInt16Member>> uint16s;
-		public List<MultiDimDataSource<SignedInt32Member>> int32s;
-		public List<MultiDimDataSource<UnsignedInt32Member>> uint32s;
-		public List<MultiDimDataSource<Float32Member>> floats;
-		public List<MultiDimDataSource<Float64Member>> doubles;
-		public List<MultiDimDataSource<ComplexFloat32Member>> cfloats;  // including c16int
-		public List<MultiDimDataSource<ComplexFloat64Member>> cdoubles; // including c32int
-	}
-
-	/**
-	 * 
-	 * @param newInfo
-	 * @param results
-	 */
-	static void mergeBundleInto(DataBundle newInfo, DataBundle results) {
-
-		if (results.chars == null) {
-			results.chars = newInfo.chars;
-		}
-		else {
-			if (newInfo.chars != null) {
-				for (String key : newInfo.chars.keySet()) {
-					results.chars.put(key, newInfo.chars.get(key));
-				}
-			}
-		}
-
-		if (results.uint8s == null) {
-			results.uint8s = newInfo.uint8s;
-		}
-		else {
-			if (newInfo.uint8s != null) {
-				results.uint8s.addAll(newInfo.uint8s);
-			}
-		}
-
-		if (results.uint16s == null) {
-			results.uint16s = newInfo.uint16s;
-		}
-		else {
-			if (newInfo.uint16s != null) {
-				results.uint16s.addAll(newInfo.uint16s);
-			}
-		}
-
-		if (results.int16s == null) {
-			results.int16s = newInfo.int16s;
-		}
-		else {
-			if (newInfo.int16s != null) {
-				results.int16s.addAll(newInfo.int16s);
-			}
-		}
-
-		if (results.uint32s == null) {
-			results.uint32s = newInfo.uint32s;
-		}
-		else {
-			if (newInfo.uint32s != null) {
-				results.uint32s.addAll(newInfo.uint32s);
-			}
-		}
-
-		if (results.int32s == null) {
-			results.int32s = newInfo.int32s;
-		}
-		else {
-			if (newInfo.int32s != null) {
-				results.int32s.addAll(newInfo.int32s);
-			}
-		}
-
-		if (results.floats == null) {
-			results.floats = newInfo.floats;
-		}
-		else {
-			if (newInfo.floats != null) {
-				results.floats.addAll(newInfo.floats);
-			}
-		}
-
-		if (results.doubles == null) {
-			results.doubles = newInfo.doubles;
-		}
-		else {
-			if (newInfo.doubles != null) {
-				results.doubles.addAll(newInfo.doubles);
-			}
-		}
-
-		if (results.cfloats == null) {
-			results.cfloats = newInfo.cfloats;
-		}
-		else {
-			if (newInfo.cfloats != null) {
-				results.cfloats.addAll(newInfo.cfloats);
-			}
-		}
-
-		if (results.cdoubles == null) {
-			results.cdoubles = newInfo.cdoubles;
-		}
-		else {
-			if (newInfo.cdoubles != null) {
-				results.cdoubles.addAll(newInfo.cdoubles);
-			}
-		}
-
-	}
-	
-	/**
 	 * This must be called once at startup by users of this gdal interface package
 	 */
 	public static void init() {
@@ -203,87 +84,75 @@ public class Gdal {
 				if (pair.length != 2)
 					throw new IllegalArgumentException("gdal metadata: too many equal signs in internal filename");
 				DataBundle bundle = loadAll(pair[1]);
-				mergeBundleInto(bundle, resultSets);
+				resultSets.merge(bundle);
 				counter++;
 			}
 		}
-		System.out.println(ds.GetDescription());
-		if (ds.GetRasterCount() == 0) {
-			// this file probably contains a bunch of subdatasets. somehow query what they are
-			// and use gdal.Open() on each of them.
-			System.out.println("this dataset has been encoded as a bunch of subdatasets");
+
+		DataBundle bundle = new DataBundle();
+		
+		int type = -1;
+		int xSize = ds.GetRasterXSize();
+		int ySize = ds.getRasterYSize();
+		for (int i = 1; i <= ds.GetRasterCount(); i++) {
+			Band band = ds.GetRasterBand(i);
+			if (type == -1)
+				type = band.GetRasterDataType();
+			if (band.GetRasterDataType() != type)
+				throw new IllegalArgumentException("data has multiple different band types!");
+			if ((band.GetXSize() != xSize) || (band.GetYSize() != ySize))
+				throw new IllegalArgumentException("data has multiple band resolutions!");
+			System.out.println("   band " + i + " " + gdal.GetDataTypeName(type) + " " + band.GetDescription());
 		}
-		else {
-			DataBundle bundle = new DataBundle();
-			
-			// report the dataset's info
-			System.out.println(" x size " + ds.GetRasterXSize());
-			System.out.println(" y size " + ds.GetRasterYSize());
-			System.out.println(" rasters " + ds.GetRasterCount());
-			int type = -1;
-			int xSize = ds.GetRasterXSize();
-			int ySize = ds.getRasterYSize();
-			for (int i = 1; i <= ds.GetRasterCount(); i++) {
-				Band band = ds.GetRasterBand(i);
-				if (type == -1)
-					type = band.GetRasterDataType();
-				if (band.GetRasterDataType() != type)
-					throw new IllegalArgumentException("data has multiple different band types!");
-				if ((band.GetXSize() != xSize) || (band.GetYSize() != ySize))
-					throw new IllegalArgumentException("data has multiple band resolutions!");
-				System.out.println("   band " + i + " " + gdal.GetDataTypeName(type) + " " + band.GetDescription());
-			}
-			if (type == gdalconst.GDT_Byte) {
-				if (bundle.uint8s == null) bundle.uint8s = new ArrayList<>();
-				bundle.uint8s.add(loadUByteData(ds, G.UINT8.construct()));
-			}
-			else if (type == gdalconst.GDT_UInt16) {
-				if (bundle.uint16s == null) bundle.uint16s = new ArrayList<>();
-				bundle.uint16s.add(loadUShortData(ds, G.UINT16.construct()));
-			}
-			else if (type == gdalconst.GDT_Int16) {
-				if (bundle.int16s == null) bundle.int16s = new ArrayList<>();
-				bundle.int16s.add(loadShortData(ds, G.INT16.construct()));
-			}
-			else if (type == gdalconst.GDT_UInt32) {
-				if (bundle.uint32s == null) bundle.uint32s = new ArrayList<>();
-				bundle.uint32s.add(loadUIntData(ds, G.UINT32.construct()));
-			}
-			else if (type == gdalconst.GDT_Int32) {
-				if (bundle.int32s == null) bundle.int32s = new ArrayList<>();
-				bundle.int32s.add(loadIntData(ds, G.INT32.construct()));
-			}
-			else if (type == gdalconst.GDT_Float32) {
-				if (bundle.floats == null) bundle.floats = new ArrayList<>();
-				bundle.floats.add(loadFloatData(ds, G.FLT.construct()));
-			}
-			else if (type == gdalconst.GDT_Float64) {
-				if (bundle.doubles == null) bundle.doubles = new ArrayList<>();
-				bundle.doubles.add(loadDoubleData(ds, G.DBL.construct()));
-			}
-			else if (type == gdalconst.GDT_CInt16) {
-				// I have no exact match for this class: widen data
-				if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
-				bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
-			}
-			else if (type == gdalconst.GDT_CInt32) {
-				// I have no exact match for this class: widen data
-				if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
-				bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
-			}
-			else if (type == gdalconst.GDT_CFloat32) {
-				if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
-				bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
-			}
-			else if (type == gdalconst.GDT_CFloat64) {
-				if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
-				bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
-			}
-			else
-				System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
-			System.out.println("data loaded");
-			mergeBundleInto(bundle, resultSets);
+		if (type == gdalconst.GDT_Byte) {
+			if (bundle.uint8s == null) bundle.uint8s = new ArrayList<>();
+			bundle.uint8s.add(loadUByteData(ds, G.UINT8.construct()));
 		}
+		else if (type == gdalconst.GDT_UInt16) {
+			if (bundle.uint16s == null) bundle.uint16s = new ArrayList<>();
+			bundle.uint16s.add(loadUShortData(ds, G.UINT16.construct()));
+		}
+		else if (type == gdalconst.GDT_Int16) {
+			if (bundle.int16s == null) bundle.int16s = new ArrayList<>();
+			bundle.int16s.add(loadShortData(ds, G.INT16.construct()));
+		}
+		else if (type == gdalconst.GDT_UInt32) {
+			if (bundle.uint32s == null) bundle.uint32s = new ArrayList<>();
+			bundle.uint32s.add(loadUIntData(ds, G.UINT32.construct()));
+		}
+		else if (type == gdalconst.GDT_Int32) {
+			if (bundle.int32s == null) bundle.int32s = new ArrayList<>();
+			bundle.int32s.add(loadIntData(ds, G.INT32.construct()));
+		}
+		else if (type == gdalconst.GDT_Float32) {
+			if (bundle.floats == null) bundle.floats = new ArrayList<>();
+			bundle.floats.add(loadFloatData(ds, G.FLT.construct()));
+		}
+		else if (type == gdalconst.GDT_Float64) {
+			if (bundle.doubles == null) bundle.doubles = new ArrayList<>();
+			bundle.doubles.add(loadDoubleData(ds, G.DBL.construct()));
+		}
+		else if (type == gdalconst.GDT_CInt16) {
+			// I have no exact match for this class: widen data
+			if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
+			bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
+		}
+		else if (type == gdalconst.GDT_CInt32) {
+			// I have no exact match for this class: widen data
+			if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
+			bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
+		}
+		else if (type == gdalconst.GDT_CFloat32) {
+			if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
+			bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
+		}
+		else if (type == gdalconst.GDT_CFloat64) {
+			if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
+			bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
+		}
+		else if (type != -1)
+			System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
+		resultSets.merge(bundle);
 		return resultSets;
 	}
 	

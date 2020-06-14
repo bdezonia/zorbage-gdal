@@ -26,8 +26,6 @@
  */
 package nom.bdezonia.zorbage.gdal;
 
-import nom.bdezonia.zorbage.gdal.Gdal.DataBundle;
-
 /**
  * 
  * @author Barry DeZonia
