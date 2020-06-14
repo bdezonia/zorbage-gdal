@@ -36,9 +36,10 @@ import nom.bdezonia.zorbage.gdal.Gdal.DataBundle;
 public class Main {
 
 	public static void main(String[] args) {
+		
 		Gdal.init();
 
-		//String filename = "/home/bdz/images/modis/modis.hdf";
+		String filename = "/home/bdz/images/modis/modis.hdf";
 		//String filename = "/home/bdz/images/qesdi/cru_v3_dtr_clim10.nc";
 		
 		//String filename = "/home/bdz/images/imagej-samples/AuPbSn40.jpg";
@@ -72,19 +73,19 @@ public class Main {
 		//String filename = "/home/bdz/images/imagej-samples/t1-head.tif";
 		//String filename = "/home/bdz/images/imagej-samples/t1-rendering.tif";
 		//String filename = "/home/bdz/images/imagej-samples/TEM_filter_sample.jpg";
-		String filename = "/home/bdz/images/imagej-samples/Tree_Rings.jpg";
+		//String filename = "/home/bdz/images/imagej-samples/Tree_Rings.jpg";
 
-		DataBundle bundle = Gdal.open(filename);
+		DataBundle bundle = Gdal.loadAll(filename);
 		
-		if (bundle.uint8s != null) System.out.println("one or more ubyte datasets were loaded");
-		if (bundle.uint16s != null) System.out.println("one or more ushort datasets were loaded");
-		if (bundle.int16s != null) System.out.println("one or more short datasets were loaded");
-		if (bundle.uint32s != null) System.out.println("one or more uint datasets were loaded");
-		if (bundle.int32s != null) System.out.println("one or more int datasets were loaded");
-		if (bundle.floats != null) System.out.println("one or more float datasets were loaded");
-		if (bundle.doubles != null) System.out.println("one or more double datasets were loaded");
-		if (bundle.cfloats != null) System.out.println("one or more complex float datasets were loaded");
-		if (bundle.cdoubles != null) System.out.println("one or more complex double datasets were loaded");
+		if (bundle.uint8s != null) System.out.println(bundle.uint8s.size() + " ubyte datasets were loaded");
+		if (bundle.uint16s != null) System.out.println(bundle.uint16s.size() + " ushort datasets were loaded");
+		if (bundle.int16s != null) System.out.println(bundle.int16s.size() + " short datasets were loaded");
+		if (bundle.uint32s != null) System.out.println(bundle.uint32s.size() + " uint datasets were loaded");
+		if (bundle.int32s != null) System.out.println(bundle.int32s.size() + " int datasets were loaded");
+		if (bundle.floats != null) System.out.println(bundle.floats.size() + " float datasets were loaded");
+		if (bundle.doubles != null) System.out.println(bundle.doubles.size() + " double datasets were loaded");
+		if (bundle.cfloats != null) System.out.println(bundle.cfloats.size() + " complex float datasets were loaded");
+		if (bundle.cdoubles != null) System.out.println(bundle.cdoubles.size() + " complex double datasets were loaded");
 		if (bundle.chars != null) System.out.println("some character data was loaded");
 	}
 }
