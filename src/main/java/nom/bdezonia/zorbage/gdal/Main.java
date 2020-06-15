@@ -37,8 +37,9 @@ public class Main {
 		
 		Gdal.init();
 
-		String filename = "/home/bdz/images/modis/modis.hdf";
-		//String filename = "/home/bdz/images/qesdi/cru_v3_dtr_clim10.nc";
+		//String filename = "/home/bdz/images/modis/modis.hdf";
+		String filename = "/home/bdz/images/qesdi/cru_v3_dtr_clim10.nc";
+		//String filename = "/home/bdz/images/qesdi/wwf_olson2006_ecosystems.nc";
 		
 		//String filename = "/home/bdz/images/imagej-samples/AuPbSn40.jpg";
 		//String filename = "/home/bdz/images/imagej-samples/bat-cochlea-renderings.tif";
@@ -75,11 +76,11 @@ public class Main {
 
 		DataBundle bundle = Gdal.loadAll(filename);
 		
-		if (bundle.uint8s != null) System.out.println(bundle.uint8s.size() + " ubyte datasets were loaded");
-		if (bundle.uint16s != null) System.out.println(bundle.uint16s.size() + " ushort datasets were loaded");
-		if (bundle.int16s != null) System.out.println(bundle.int16s.size() + " short datasets were loaded");
-		if (bundle.uint32s != null) System.out.println(bundle.uint32s.size() + " uint datasets were loaded");
-		if (bundle.int32s != null) System.out.println(bundle.int32s.size() + " int datasets were loaded");
+		if (bundle.uint8s != null) System.out.println(bundle.uint8s.size() + " uint8 datasets were loaded");
+		if (bundle.uint16s != null) System.out.println(bundle.uint16s.size() + " uint16 datasets were loaded");
+		if (bundle.int16s != null) System.out.println(bundle.int16s.size() + " int16 datasets were loaded");
+		if (bundle.uint32s != null) System.out.println(bundle.uint32s.size() + " uint32 datasets were loaded");
+		if (bundle.int32s != null) System.out.println(bundle.int32s.size() + " int32 datasets were loaded");
 		if (bundle.floats != null) System.out.println(bundle.floats.size() + " float datasets were loaded");
 		if (bundle.doubles != null) System.out.println(bundle.doubles.size() + " double datasets were loaded");
 		if (bundle.cfloats != null) System.out.println(bundle.cfloats.size() + " complex float datasets were loaded");
