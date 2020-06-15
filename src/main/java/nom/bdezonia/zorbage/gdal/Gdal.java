@@ -36,8 +36,8 @@ import org.gdal.gdalconst.gdalconst;
 
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
-import nom.bdezonia.zorbage.multidim.MultiDimDataSource;
-import nom.bdezonia.zorbage.multidim.MultiDimStorage;
+import nom.bdezonia.zorbage.data.DimensionedDataSource;
+import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.procedure.Procedure4;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
 import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
@@ -157,7 +157,7 @@ public class Gdal {
 	}
 	
 	private static <U extends Allocatable<U>>
-		MultiDimDataSource<U> loadData(Dataset ds, U var, Procedure4<Band, Integer, Integer, U> proc)
+		DimensionedDataSource<U> loadData(Dataset ds, U var, Procedure4<Band, Integer, Integer, U> proc)
 	{
 		int planes = ds.getRasterCount();
 		long[] dims;
@@ -167,7 +167,7 @@ public class Gdal {
 		else {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
 		}
-		MultiDimDataSource<U> data = MultiDimStorage.allocate(dims, var);
+		DimensionedDataSource<U> data = DimensionedStorage.allocate(dims, var);
 		
 		long[] minPt = new long[data.numDimensions()];
 		long[] maxPt = new long[data.numDimensions()];
@@ -199,7 +199,7 @@ public class Gdal {
 		return data;
 	}
 
-	private static MultiDimDataSource<UnsignedInt8Member> loadUByteData(Dataset ds, UnsignedInt8Member var) {
+	private static DimensionedDataSource<UnsignedInt8Member> loadUByteData(Dataset ds, UnsignedInt8Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt8Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt8Member>()
 		{
@@ -214,7 +214,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<UnsignedInt16Member> loadUShortData(Dataset ds, UnsignedInt16Member var) {
+	private static DimensionedDataSource<UnsignedInt16Member> loadUShortData(Dataset ds, UnsignedInt16Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt16Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt16Member>()
 		{
@@ -229,7 +229,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<SignedInt16Member> loadShortData(Dataset ds, SignedInt16Member var) {
+	private static DimensionedDataSource<SignedInt16Member> loadShortData(Dataset ds, SignedInt16Member var) {
 		Procedure4<Band,Integer,Integer,SignedInt16Member> proc =
 				new Procedure4<Band, Integer, Integer, SignedInt16Member>()
 		{
@@ -244,7 +244,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<UnsignedInt32Member> loadUIntData(Dataset ds, UnsignedInt32Member var) {
+	private static DimensionedDataSource<UnsignedInt32Member> loadUIntData(Dataset ds, UnsignedInt32Member var) {
 		Procedure4<Band,Integer,Integer,UnsignedInt32Member> proc =
 				new Procedure4<Band, Integer, Integer, UnsignedInt32Member>()
 		{
@@ -259,7 +259,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<SignedInt32Member> loadIntData(Dataset ds, SignedInt32Member var) {
+	private static DimensionedDataSource<SignedInt32Member> loadIntData(Dataset ds, SignedInt32Member var) {
 		Procedure4<Band,Integer,Integer,SignedInt32Member> proc =
 				new Procedure4<Band, Integer, Integer, SignedInt32Member>()
 		{
@@ -274,7 +274,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<Float32Member> loadFloatData(Dataset ds, Float32Member var) {
+	private static DimensionedDataSource<Float32Member> loadFloatData(Dataset ds, Float32Member var) {
 		Procedure4<Band,Integer,Integer,Float32Member> proc =
 				new Procedure4<Band, Integer, Integer, Float32Member>()
 		{
@@ -289,7 +289,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<Float64Member> loadDoubleData(Dataset ds, Float64Member var) {
+	private static DimensionedDataSource<Float64Member> loadDoubleData(Dataset ds, Float64Member var) {
 		Procedure4<Band,Integer,Integer,Float64Member> proc =
 				new Procedure4<Band, Integer, Integer, Float64Member>()
 		{
@@ -304,7 +304,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member var) {
+	private static DimensionedDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member var) {
 		Procedure4<Band,Integer,Integer,ComplexFloat32Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat32Member>()
 		{
@@ -328,7 +328,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	private static MultiDimDataSource<ComplexFloat64Member> loadComplexDoubleData(Dataset ds, ComplexFloat64Member var) {
+	private static DimensionedDataSource<ComplexFloat64Member> loadComplexDoubleData(Dataset ds, ComplexFloat64Member var) {
 		Procedure4<Band,Integer,Integer,ComplexFloat64Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat64Member>()
 		{
