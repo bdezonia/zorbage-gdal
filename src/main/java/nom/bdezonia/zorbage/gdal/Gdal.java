@@ -28,6 +28,7 @@ package nom.bdezonia.zorbage.gdal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
@@ -184,6 +185,18 @@ public class Gdal {
 				maxPt[2] = i;
 			}
 			Band band = ds.GetRasterBand(i+1);
+			data.metadata().put("band-"+i+"-description", band.GetDescription());
+			data.metadata().put("band-"+i+"-units", band.GetUnitType());
+			@SuppressWarnings("unchecked")
+			Hashtable<String,String> table = (Hashtable<String,String>) band.GetMetadata_Dict();
+			for (String key : table.keySet()) {
+				String value = table.get(key);
+				if (key != null && key.length() > 0) {
+					if (value != null && value.length() > 0) {
+						data.metadata().put("band-"+i+"-"+key, value);
+					}
+				}
+			}
 			SamplingCartesianIntegerGrid grid = new SamplingCartesianIntegerGrid(minPt, maxPt);
 			if (planes > 1) {
 				minPt[2] = 0;
