@@ -27,6 +27,7 @@
 package nom.bdezonia.zorbage.gdal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
@@ -167,6 +168,9 @@ public class Gdal {
 		else {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
 		}
+		
+		System.out.println("making a dataset of dims "+Arrays.toString(dims));
+		
 		DimensionedDataSource<U> data = DimensionedStorage.allocate(dims, var);
 		
 		long[] minPt = new long[data.numDimensions()];
