@@ -27,7 +27,6 @@
 package nom.bdezonia.zorbage.gdal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -104,7 +103,6 @@ public class Gdal {
 				throw new IllegalArgumentException("data has multiple different band types!");
 			if ((band.GetXSize() != xSize) || (band.GetYSize() != ySize))
 				throw new IllegalArgumentException("data has multiple band resolutions!");
-			System.out.println("   band " + i + " " + gdal.GetDataTypeName(type) + " " + band.GetDescription());
 		}
 		if (type == gdalconst.GDT_Byte) {
 			if (bundle.uint8s == null) bundle.uint8s = new ArrayList<>();
@@ -169,8 +167,6 @@ public class Gdal {
 		else {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
 		}
-		
-		System.out.println("making a dataset of dims "+Arrays.toString(dims));
 		
 		DimensionedDataSource<U> data = DimensionedStorage.allocate(dims, var);
 		
