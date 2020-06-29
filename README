@@ -1,16 +1,15 @@
-zorbage-gdal: code for loading gdal files into zorbage data structures for further processing
+zorbage-gdal: code for using the gdal data file library to open files into zorbage data structures for further processing
 
 To learn more about Zorbage please visit https://github.com/bdezonia/zorbage
 
-Installing on Ubuntu
+To learn more about Gdal please visit https://gdal.org/
 
-Prerequisites:
+Prerequisites (only Ubuntu instructions below)
 
-Install gdal and support files on ubuntu
+Install gdal and support files:
 
 sudo add-apt-repository ppa:ubuntugis/ppa
 sudo apt-get update
 sudo apt-get install gdal-bin
 sudo apt-get install libgdal-dev
 sudo apt-get install libgdal-java
-
