@@ -4,12 +4,22 @@ To learn more about Zorbage please visit https://github.com/bdezonia/zorbage
 
 To learn more about Gdal please visit https://gdal.org/
 
+Code examples:
+
+  Must do this at the beginning of your program:
+  
+    Gdal.init();
+  
+  Now to open all data associated with a data file:
+    
+    DataBundle results = Gdal.open("sunset.jpg");
+
 Prerequisites (only Ubuntu instructions below)
 
-Install gdal and support files:
+  Install gdal and support files:
 
-sudo add-apt-repository ppa:ubuntugis/ppa
-sudo apt-get update
-sudo apt-get install gdal-bin
-sudo apt-get install libgdal-dev
-sudo apt-get install libgdal-java
+  sudo add-apt-repository ppa:ubuntugis/ppa
+  sudo apt-get update
+  sudo apt-get install gdal-bin
+  sudo apt-get install libgdal-dev
+  sudo apt-get install libgdal-java
