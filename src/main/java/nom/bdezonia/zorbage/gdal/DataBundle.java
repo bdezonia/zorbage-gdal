@@ -1,5 +1,5 @@
 /*
- * zorbage-gdal: code for loading gdal files into zorbage data structures for further processing
+ * zorbage-gdal: code for using the gdal data file library to open files into zorbage data structures for further processing
  *
  * Copyright (C) 2020 Barry DeZonia
  * 
