@@ -33,7 +33,7 @@ package nom.bdezonia.zorbage.gdal;
  */
 public class Main {
 
-	static void test() {
+	/* public */ static void main(String[] args) {
 		
 		Gdal.init();
 

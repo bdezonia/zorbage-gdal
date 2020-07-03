@@ -37,11 +37,11 @@ import org.gdal.gdalconst.gdalconst;
 
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
+import nom.bdezonia.zorbage.algorithm.GridIterator;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
 import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.procedure.Procedure4;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
-import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
 import nom.bdezonia.zorbage.sampling.SamplingIterator;
 import nom.bdezonia.zorbage.type.float32.complex.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.float32.real.Float32Member;
@@ -193,12 +193,7 @@ public class Gdal {
 					}
 				}
 			}
-			SamplingCartesianIntegerGrid grid = new SamplingCartesianIntegerGrid(minPt, maxPt);
-			if (planes > 1) {
-				minPt[2] = 0;
-				maxPt[2] = data.dimension(i)-1;
-			}
-			SamplingIterator<IntegerIndex> iter = grid.iterator();
+			SamplingIterator<IntegerIndex> iter = GridIterator.compute(minPt, maxPt);
 			IntegerIndex index = new IntegerIndex(data.numDimensions());
 			// gdal y origin is top left of raster while zorbage has it at lower left
 			for (int y = ds.GetRasterYSize()-1; y >= 0; y--) {
@@ -207,6 +202,10 @@ public class Gdal {
 					proc.call(band, x, y, var);
 					data.set(index, var);
 				}				
+			}
+			if (planes > 1) {
+				minPt[2] = 0;
+				maxPt[2] = data.dimension(i)-1;
 			}
 		}
 		return data;
