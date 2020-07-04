@@ -26,6 +26,7 @@
  */
 package nom.bdezonia.zorbage.gdal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -46,15 +47,15 @@ import nom.bdezonia.zorbage.type.int8.UnsignedInt8Member;
 public class DataBundle {
 
 	public Map<String,String> chars;
-	public List<DimensionedDataSource<UnsignedInt8Member>> uint8s;
-	public List<DimensionedDataSource<SignedInt16Member>> int16s;
-	public List<DimensionedDataSource<UnsignedInt16Member>> uint16s;
-	public List<DimensionedDataSource<SignedInt32Member>> int32s;
-	public List<DimensionedDataSource<UnsignedInt32Member>> uint32s;
-	public List<DimensionedDataSource<Float32Member>> floats;
-	public List<DimensionedDataSource<Float64Member>> doubles;
-	public List<DimensionedDataSource<ComplexFloat32Member>> cfloats;  // including c16int
-	public List<DimensionedDataSource<ComplexFloat64Member>> cdoubles; // including c32int
+	public List<DimensionedDataSource<UnsignedInt8Member>> uint8s = new ArrayList<>();
+	public List<DimensionedDataSource<SignedInt16Member>> int16s = new ArrayList<>();
+	public List<DimensionedDataSource<UnsignedInt16Member>> uint16s = new ArrayList<>();
+	public List<DimensionedDataSource<SignedInt32Member>> int32s = new ArrayList<>();
+	public List<DimensionedDataSource<UnsignedInt32Member>> uint32s = new ArrayList<>();
+	public List<DimensionedDataSource<Float32Member>> floats = new ArrayList<>();
+	public List<DimensionedDataSource<Float64Member>> doubles = new ArrayList<>();
+	public List<DimensionedDataSource<ComplexFloat32Member>> cfloats = new ArrayList<>();  // including c16int
+	public List<DimensionedDataSource<ComplexFloat64Member>> cdoubles = new ArrayList<>(); // including c32int
 
 	/**
 	 * 

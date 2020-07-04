@@ -195,8 +195,7 @@ public class Gdal {
 			}
 			SamplingIterator<IntegerIndex> iter = GridIterator.compute(minPt, maxPt);
 			IntegerIndex index = new IntegerIndex(data.numDimensions());
-			// gdal y origin is top left of raster while zorbage has it at lower left
-			for (int y = ds.GetRasterYSize()-1; y >= 0; y--) {
+			for (int y = 0; y < ds.GetRasterYSize(); y++) {
 				for (int x = 0; x < ds.GetRasterXSize(); x++) {
 					iter.next(index);
 					proc.call(band, x, y, var);
