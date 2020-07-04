@@ -74,7 +74,7 @@ public class Main {
 		//String filename = "/home/bdz/images/imagej-samples/TEM_filter_sample.jpg";
 		//String filename = "/home/bdz/images/imagej-samples/Tree_Rings.jpg";
 
-		DataBundle bundle = Gdal.loadAll(filename);
+		DataBundle bundle = Gdal.loadAllDatasets(filename);
 		
 		if (bundle.uint8s != null) System.out.println(bundle.uint8s.size() + " uint8 datasets were loaded");
 		if (bundle.uint16s != null) System.out.println(bundle.uint16s.size() + " uint16 datasets were loaded");

@@ -71,7 +71,7 @@ public class Gdal {
 	 * 
 	 * @param filename
 	 */
-	public static DataBundle loadAll(String filename) {
+	public static DataBundle loadAllDatasets(String filename) {
 
 		DataBundle resultSets = new DataBundle();
 		Dataset ds = gdal.Open(filename);
@@ -84,7 +84,7 @@ public class Gdal {
 				String[] pair = entry.split("=");
 				if (pair.length != 2)
 					throw new IllegalArgumentException("gdal metadata: too many equal signs in internal filename");
-				DataBundle bundle = loadAll(pair[1]);
+				DataBundle bundle = loadAllDatasets(pair[1]);
 				resultSets.merge(bundle);
 				counter++;
 			}
