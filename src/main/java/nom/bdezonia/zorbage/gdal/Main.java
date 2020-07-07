@@ -26,6 +26,8 @@
  */
 package nom.bdezonia.zorbage.gdal;
 
+import nom.bdezonia.zorbage.misc.DataBundle;
+
 /**
  * 
  * @author Barry DeZonia
@@ -75,16 +77,7 @@ public class Main {
 		//String filename = "/home/bdz/images/imagej-samples/Tree_Rings.jpg";
 
 		DataBundle bundle = Gdal.loadAllDatasets(filename);
-		
-		if (bundle.uint8s != null) System.out.println(bundle.uint8s.size() + " uint8 datasets were loaded");
-		if (bundle.uint16s != null) System.out.println(bundle.uint16s.size() + " uint16 datasets were loaded");
-		if (bundle.int16s != null) System.out.println(bundle.int16s.size() + " int16 datasets were loaded");
-		if (bundle.uint32s != null) System.out.println(bundle.uint32s.size() + " uint32 datasets were loaded");
-		if (bundle.int32s != null) System.out.println(bundle.int32s.size() + " int32 datasets were loaded");
-		if (bundle.floats != null) System.out.println(bundle.floats.size() + " float datasets were loaded");
-		if (bundle.doubles != null) System.out.println(bundle.doubles.size() + " double datasets were loaded");
-		if (bundle.cfloats != null) System.out.println(bundle.cfloats.size() + " complex float datasets were loaded");
-		if (bundle.cdoubles != null) System.out.println(bundle.cdoubles.size() + " complex double datasets were loaded");
-		if (bundle.chars != null) System.out.println("some character data was loaded");
+
+		System.out.println(bundle.bundle().size() + " datasets were loaded");
 	}
 }

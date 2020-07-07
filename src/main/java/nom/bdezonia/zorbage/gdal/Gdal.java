@@ -26,7 +26,6 @@
  */
 package nom.bdezonia.zorbage.gdal;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -40,6 +39,7 @@ import nom.bdezonia.zorbage.algebra.G;
 import nom.bdezonia.zorbage.algorithm.GridIterator;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
 import nom.bdezonia.zorbage.data.DimensionedStorage;
+import nom.bdezonia.zorbage.misc.DataBundle;
 import nom.bdezonia.zorbage.procedure.Procedure4;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
 import nom.bdezonia.zorbage.sampling.SamplingIterator;
@@ -85,7 +85,7 @@ public class Gdal {
 				if (pair.length != 2)
 					throw new IllegalArgumentException("gdal metadata: too many equal signs in internal filename");
 				DataBundle bundle = loadAllDatasets(pair[1]);
-				resultSets.merge(bundle);
+				resultSets.mergeAll(bundle);
 				counter++;
 			}
 		}
@@ -105,54 +105,43 @@ public class Gdal {
 				throw new IllegalArgumentException("data has multiple band resolutions!");
 		}
 		if (type == gdalconst.GDT_Byte) {
-			if (bundle.uint8s == null) bundle.uint8s = new ArrayList<>();
-			bundle.uint8s.add(loadUByteData(ds, G.UINT8.construct()));
+			bundle.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
 		}
 		else if (type == gdalconst.GDT_UInt16) {
-			if (bundle.uint16s == null) bundle.uint16s = new ArrayList<>();
-			bundle.uint16s.add(loadUShortData(ds, G.UINT16.construct()));
+			bundle.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
 		}
 		else if (type == gdalconst.GDT_Int16) {
-			if (bundle.int16s == null) bundle.int16s = new ArrayList<>();
-			bundle.int16s.add(loadShortData(ds, G.INT16.construct()));
+			bundle.mergeInt16(loadShortData(ds, G.INT16.construct()));
 		}
 		else if (type == gdalconst.GDT_UInt32) {
-			if (bundle.uint32s == null) bundle.uint32s = new ArrayList<>();
-			bundle.uint32s.add(loadUIntData(ds, G.UINT32.construct()));
+			bundle.mergeUInt32(loadUIntData(ds, G.UINT32.construct()));
 		}
 		else if (type == gdalconst.GDT_Int32) {
-			if (bundle.int32s == null) bundle.int32s = new ArrayList<>();
-			bundle.int32s.add(loadIntData(ds, G.INT32.construct()));
+			bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
 		}
 		else if (type == gdalconst.GDT_Float32) {
-			if (bundle.floats == null) bundle.floats = new ArrayList<>();
-			bundle.floats.add(loadFloatData(ds, G.FLT.construct()));
+			bundle.mergeFloat32(loadFloatData(ds, G.FLT.construct()));
 		}
 		else if (type == gdalconst.GDT_Float64) {
-			if (bundle.doubles == null) bundle.doubles = new ArrayList<>();
-			bundle.doubles.add(loadDoubleData(ds, G.DBL.construct()));
+			bundle.mergeFloat64(loadDoubleData(ds, G.DBL.construct()));
 		}
 		else if (type == gdalconst.GDT_CInt16) {
 			// I have no exact match for this class: widen data
-			if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
-			bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
+			bundle.mergeComplexFloat32(loadComplexFloatData(ds, G.CFLT.construct()));
 		}
 		else if (type == gdalconst.GDT_CInt32) {
 			// I have no exact match for this class: widen data
-			if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
-			bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
+			bundle.mergeComplexFloat64(loadComplexDoubleData(ds, G.CDBL.construct()));
 		}
 		else if (type == gdalconst.GDT_CFloat32) {
-			if (bundle.cfloats == null) bundle.cfloats = new ArrayList<>();
-			bundle.cfloats.add(loadComplexFloatData(ds, G.CFLT.construct()));
+			bundle.mergeComplexFloat32(loadComplexFloatData(ds, G.CFLT.construct()));
 		}
 		else if (type == gdalconst.GDT_CFloat64) {
-			if (bundle.cdoubles == null) bundle.cdoubles = new ArrayList<>();
-			bundle.cdoubles.add(loadComplexDoubleData(ds, G.CDBL.construct()));
+			bundle.mergeComplexFloat64(loadComplexDoubleData(ds, G.CDBL.construct()));
 		}
 		else if (type != -1)
 			System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
-		resultSets.merge(bundle);
+		resultSets.mergeAll(bundle);
 		return resultSets;
 	}
 	
