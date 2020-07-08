@@ -120,10 +120,10 @@ public class Gdal {
 			bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
 		}
 		else if (type == gdalconst.GDT_Float32) {
-			bundle.mergeFloat32(loadFloatData(ds, G.FLT.construct()));
+			bundle.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
 		}
 		else if (type == gdalconst.GDT_Float64) {
-			bundle.mergeFloat64(loadDoubleData(ds, G.DBL.construct()));
+			bundle.mergeFlt64(loadDoubleData(ds, G.DBL.construct()));
 		}
 		else if (type == gdalconst.GDT_CInt16) {
 			// I have no exact match for this class: widen data
