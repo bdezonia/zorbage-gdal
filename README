@@ -18,8 +18,13 @@ Prerequisites (only Ubuntu instructions below)
 
   Install gdal and support files:
 
+  < do this for ubuntu 18 LTS, not needed for ubuntu 20.04 LTS >
+  
   sudo add-apt-repository ppa:ubuntugis/ppa
   sudo apt-get update
+  
+  < then do this for Ubuntu 18 and Ubuntu 20 >
+  
   sudo apt-get install gdal-bin
   sudo apt-get install libgdal-dev
   sudo apt-get install libgdal-java
