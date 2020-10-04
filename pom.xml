@@ -4,7 +4,7 @@
   <artifactId>zorbage-gdal</artifactId>
   <version>0.0.4</version>
   <name>zorbage-gdal</name>
-  <description>zorbage-gdal: code for loading gdal files into zorbage data structures for further processing</description>
+  <description>zorbage-gdal: code for using the GDAL data file loading library to populate data into zorbage structures for further processing</description>
   <url>https://github.com/bdezonia/zorbage-gdal</url>
   <inceptionYear>2020</inceptionYear>
   
@@ -30,7 +30,7 @@
   <properties>
     <package-name>nom.bdezonia</package-name>
     <license.licenseName>bsd_2</license.licenseName>
-    <license.projectName>zorbage-gdal: code for loading gdal files into zorbage data structures for further processing</license.projectName>
+    <license.projectName>zorbage-gdal: code for using the GDAL data file loading library to populate data into zorbage structures for further processing</license.projectName>
     <license.organizationName>zorbage-gdal authors</license.organizationName>
     <license.copyrightOwners>Barry DeZonia</license.copyrightOwners>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

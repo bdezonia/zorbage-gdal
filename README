@@ -1,4 +1,4 @@
-zorbage-gdal: code for using the gdal data file library to open files into zorbage data structures for further processing
+zorbage-gdal: code for using the GDAL data file loading library to populate data into zorbage structures for further processing
 
 To learn more about Zorbage please visit https://github.com/bdezonia/zorbage
 
