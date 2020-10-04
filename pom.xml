@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.bdezonia</groupId>
   <artifactId>zorbage-gdal</artifactId>
-  <version>0.0.3-SNAPSHOT</version>
+  <version>0.0.3</version>
   <name>zorbage-gdal</name>
   <description>zorbage-gdal: code for loading gdal files into zorbage data structures for further processing</description>
   <url>https://github.com/bdezonia/zorbage-gdal</url>
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>io.github.bdezonia</groupId>
       <artifactId>zorbage</artifactId>
-      <version>1.6.0-SNAPSHOT</version>
+      <version>1.6.0</version>
     </dependency>
   
     <dependency>
