@@ -157,7 +157,7 @@ public class Gdal {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
 		}
 		
-		DimensionedDataSource<U> data = DimensionedStorage.allocate(dims, var);
+		DimensionedDataSource<U> data = DimensionedStorage.allocate(var, dims);
 		
 		long[] minPt = new long[data.numDimensions()];
 		long[] maxPt = new long[data.numDimensions()];
