@@ -47,6 +47,8 @@ import nom.bdezonia.zorbage.type.float32.complex.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.float32.real.Float32Member;
 import nom.bdezonia.zorbage.type.float64.complex.ComplexFloat64Member;
 import nom.bdezonia.zorbage.type.float64.real.Float64Member;
+import nom.bdezonia.zorbage.type.gaussian.int16.GaussianInt16Member;
+import nom.bdezonia.zorbage.type.gaussian.int32.GaussianInt32Member;
 import nom.bdezonia.zorbage.type.int16.SignedInt16Member;
 import nom.bdezonia.zorbage.type.int16.UnsignedInt16Member;
 import nom.bdezonia.zorbage.type.int32.SignedInt32Member;
@@ -126,12 +128,10 @@ public class Gdal {
 			bundle.mergeFlt64(loadDoubleData(ds, G.DBL.construct()));
 		}
 		else if (type == gdalconst.GDT_CInt16) {
-			// I have no exact match for this class: widen data
-			bundle.mergeComplexFloat32(loadComplexFloatData(ds, G.CFLT.construct()));
+			bundle.mergeGaussianInt16(loadGaussianShortData(ds, G.GAUSS16.construct()));
 		}
 		else if (type == gdalconst.GDT_CInt32) {
-			// I have no exact match for this class: widen data
-			bundle.mergeComplexFloat64(loadComplexDoubleData(ds, G.CDBL.construct()));
+			bundle.mergeGaussianInt32(loadGaussianIntData(ds, G.GAUSS32.construct()));
 		}
 		else if (type == gdalconst.GDT_CFloat32) {
 			bundle.mergeComplexFloat32(loadComplexFloatData(ds, G.CFLT.construct()));
@@ -304,25 +304,49 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
+	private static DimensionedDataSource<GaussianInt16Member> loadGaussianShortData(Dataset ds, GaussianInt16Member var) {
+		Procedure4<Band,Integer,Integer,GaussianInt16Member> proc =
+				new Procedure4<Band, Integer, Integer, GaussianInt16Member>()
+		{
+			private short[] sbuffer = new short[2];
+
+			@Override
+			public void call(Band band, Integer x, Integer y, GaussianInt16Member outVal) {
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), sbuffer, 0, 0);
+				outVal.setR(sbuffer[0]);
+				outVal.setI(sbuffer[1]);
+			}
+		};
+		return loadData(ds, var, proc);
+	}
+
+	private static DimensionedDataSource<GaussianInt32Member> loadGaussianIntData(Dataset ds, GaussianInt32Member var) {
+		Procedure4<Band,Integer,Integer,GaussianInt32Member> proc =
+				new Procedure4<Band, Integer, Integer, GaussianInt32Member>()
+		{
+			private int[] ibuffer = new int[2];
+
+			@Override
+			public void call(Band band, Integer x, Integer y, GaussianInt32Member outVal) {
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), ibuffer, 0, 0);
+				outVal.setR(ibuffer[0]);
+				outVal.setI(ibuffer[1]);
+			}
+		};
+		return loadData(ds, var, proc);
+	}
+
 	private static DimensionedDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member var) {
 		Procedure4<Band,Integer,Integer,ComplexFloat32Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat32Member>()
 		{
-			private short[] sbuffer = new short[2];
 			private float[] fbuffer = new float[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, ComplexFloat32Member outVal) {
-				if (band.getDataType() == gdalconst.GDT_CInt16) {
-					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), sbuffer, 0, 0);
-					outVal.setR(sbuffer[0]);
-					outVal.setI(sbuffer[1]);
-				}
-				else {  // data type = GDT_CFloat32
-					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), fbuffer, 0, 0);
-					outVal.setR(fbuffer[0]);
-					outVal.setI(fbuffer[1]);
-				}
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), fbuffer, 0, 0);
+				outVal.setR(fbuffer[0]);
+				outVal.setI(fbuffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
@@ -332,21 +356,13 @@ public class Gdal {
 		Procedure4<Band,Integer,Integer,ComplexFloat64Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat64Member>()
 		{
-			private int[] ibuffer = new int[2];
 			private double[] dbuffer = new double[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, ComplexFloat64Member outVal) {
-				if (band.getDataType() == gdalconst.GDT_CInt32) {
-					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), ibuffer, 0, 0);
-					outVal.setR(ibuffer[0]);
-					outVal.setI(ibuffer[1]);
-				}
-				else {  // data type = GDT_CFloat64
-					band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), dbuffer, 0, 0);
-					outVal.setR(dbuffer[0]);
-					outVal.setI(dbuffer[1]);
-				}
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), dbuffer, 0, 0);
+				outVal.setR(dbuffer[0]);
+				outVal.setI(dbuffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
