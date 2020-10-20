@@ -308,13 +308,13 @@ public class Gdal {
 		Procedure4<Band,Integer,Integer,GaussianInt16Member> proc =
 				new Procedure4<Band, Integer, Integer, GaussianInt16Member>()
 		{
-			private short[] sbuffer = new short[2];
+			private short[] buffer = new short[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, GaussianInt16Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), sbuffer, 0, 0);
-				outVal.setR(sbuffer[0]);
-				outVal.setI(sbuffer[1]);
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+				outVal.setR(buffer[0]);
+				outVal.setI(buffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
@@ -324,13 +324,13 @@ public class Gdal {
 		Procedure4<Band,Integer,Integer,GaussianInt32Member> proc =
 				new Procedure4<Band, Integer, Integer, GaussianInt32Member>()
 		{
-			private int[] ibuffer = new int[2];
+			private int[] buffer = new int[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, GaussianInt32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), ibuffer, 0, 0);
-				outVal.setR(ibuffer[0]);
-				outVal.setI(ibuffer[1]);
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+				outVal.setR(buffer[0]);
+				outVal.setI(buffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
@@ -340,13 +340,13 @@ public class Gdal {
 		Procedure4<Band,Integer,Integer,ComplexFloat32Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat32Member>()
 		{
-			private float[] fbuffer = new float[2];
+			private float[] buffer = new float[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, ComplexFloat32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), fbuffer, 0, 0);
-				outVal.setR(fbuffer[0]);
-				outVal.setI(fbuffer[1]);
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+				outVal.setR(buffer[0]);
+				outVal.setI(buffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
@@ -356,13 +356,13 @@ public class Gdal {
 		Procedure4<Band,Integer,Integer,ComplexFloat64Member> proc =
 				new Procedure4<Band, Integer, Integer, ComplexFloat64Member>()
 		{
-			private double[] dbuffer = new double[2];
+			private double[] buffer = new double[2];
 
 			@Override
 			public void call(Band band, Integer x, Integer y, ComplexFloat64Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), dbuffer, 0, 0);
-				outVal.setR(dbuffer[0]);
-				outVal.setI(dbuffer[1]);
+				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+				outVal.setR(buffer[0]);
+				outVal.setI(buffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
