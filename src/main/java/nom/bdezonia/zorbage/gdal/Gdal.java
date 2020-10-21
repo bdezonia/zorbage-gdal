@@ -313,8 +313,8 @@ public class Gdal {
 			@Override
 			public void call(Band band, Integer x, Integer y, GaussianInt16Member outVal) {
 				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
-				outVal.setR(buffer[0]);
-				outVal.setI(buffer[1]);
+				outVal.setR((int) buffer[0]);
+				outVal.setI((int) buffer[1]);
 			}
 		};
 		return loadData(ds, var, proc);
