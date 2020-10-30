@@ -134,10 +134,10 @@ public class Gdal {
 			bundle.mergeGaussianInt32(loadGaussianIntData(ds, G.GAUSS32.construct()));
 		}
 		else if (type == gdalconst.GDT_CFloat32) {
-			bundle.mergeComplexFloat32(loadComplexFloatData(ds, G.CFLT.construct()));
+			bundle.mergeComplexFlt32(loadComplexFloatData(ds, G.CFLT.construct()));
 		}
 		else if (type == gdalconst.GDT_CFloat64) {
-			bundle.mergeComplexFloat64(loadComplexDoubleData(ds, G.CDBL.construct()));
+			bundle.mergeComplexFlt64(loadComplexDoubleData(ds, G.CDBL.construct()));
 		}
 		else if (type != -1)
 			System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
