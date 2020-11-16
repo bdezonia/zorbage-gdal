@@ -28,6 +28,10 @@ Prerequisites (only Ubuntu instructions below)
   sudo apt-get install gdal-bin
   sudo apt-get install libgdal-dev
   sudo apt-get install libgdal-java
+  
+  Note: you can also install newer versions of GDAL as binaries
+  directly from https://gdal.org/download.html if the repo install
+  directions above do not give you a new enough release for your needs.
 
 How to include zorbage-gdal in your Maven project
 
@@ -36,12 +40,12 @@ How to include zorbage-gdal in your Maven project
   <dependency>
     <groupId>io.github.bdezonia</groupId>
     <artifactId>zorbage-gdal</artifactId>
-    <version>0.0.4.1</version>
+    <version>0.0.5</version>
   </dependency>
   
 How to include zorbage-gdal in a different build system
 
-  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.0.4.1/jar
+  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.0.5/jar
   for instructions on how to reference zorbage-gdal in build systems such as
   Gradle or others.
 
