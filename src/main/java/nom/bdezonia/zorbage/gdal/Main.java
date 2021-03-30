@@ -35,15 +35,15 @@ import nom.bdezonia.zorbage.misc.DataBundle;
  */
 public class Main {
 
-	/* public */ static void main(String[] args) {
+	/*public*/ static void main(String[] args) {
 		
 		Gdal.init();
 
 		//String filename = "/home/bdz/images/modis/modis.hdf";
-		String filename = "/home/bdz/images/qesdi/cru_v3_dtr_clim10.nc";
+		//String filename = "/home/bdz/images/qesdi/cru_v3_dtr_clim10.nc";
 		//String filename = "/home/bdz/images/qesdi/wwf_olson2006_ecosystems.nc";
 		
-		//String filename = "/home/bdz/images/imagej-samples/AuPbSn40.jpg";
+		String filename = "/home/bdz/images/imagej-samples/AuPbSn40.jpg";
 		//String filename = "/home/bdz/images/imagej-samples/bat-cochlea-renderings.tif";
 		//String filename = "/home/bdz/images/imagej-samples/bat-cochlea-volume.tif";
 		//String filename = "/home/bdz/images/imagej-samples/blobs.gif";
