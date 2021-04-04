@@ -40,11 +40,11 @@ How to include zorbage-gdal in your Maven project
   <dependency>
     <groupId>io.github.bdezonia</groupId>
     <artifactId>zorbage-gdal</artifactId>
-    <version>0.0.9</version>
+    <version>0.1.0</version>
   </dependency>
   
 How to include zorbage-gdal in a different build system
 
-  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.0.9/jar
+  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.1.0/jar
   for instructions on how to reference zorbage-gdal in build systems such as
   Gradle or others.
