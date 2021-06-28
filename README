@@ -45,6 +45,6 @@ How to include zorbage-gdal in your Maven project
   
 How to include zorbage-gdal in a different build system
 
-  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.1.0/jar
+  See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.1.1/jar
   for instructions on how to reference zorbage-gdal in build systems such as
   Gradle or others.
