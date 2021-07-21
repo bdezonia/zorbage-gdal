@@ -23,6 +23,9 @@
  */
 package nom.bdezonia.zorbage.gdal;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -62,8 +65,30 @@ public class Gdal {
 	/**
 	 * This must be called once at startup by users of this gdal interface package
 	 */
-	public static void init() {
+	public static int init() {
+		try {
+			String cmd = "gdalinfo --version";
+			Runtime run = Runtime.getRuntime();
+			Process pr = run.exec(cmd);
+			pr.waitFor();
+			BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+			String line = "";
+			boolean found = false;
+			while ((line=buf.readLine())!=null) {
+				if (line.contains("GDAL"))
+					found = true;
+				//System.out.println(line);
+			}
+			if (!found) {
+				return 1;
+			}
+		} catch (IOException e) {
+			return 2;
+		} catch (InterruptedException e) {
+			return 3;
+		}
 		gdal.AllRegister();
+		return 0;
 	}
 	
 	/**
