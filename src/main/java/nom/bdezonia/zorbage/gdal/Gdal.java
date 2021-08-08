@@ -36,13 +36,11 @@ import org.gdal.gdalconst.gdalconst;
 
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
-import nom.bdezonia.zorbage.algorithm.GridIterator;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
 import nom.bdezonia.zorbage.data.DimensionedStorage;
+import nom.bdezonia.zorbage.dataview.PlaneView;
 import nom.bdezonia.zorbage.misc.DataBundle;
 import nom.bdezonia.zorbage.procedure.Procedure4;
-import nom.bdezonia.zorbage.sampling.IntegerIndex;
-import nom.bdezonia.zorbage.sampling.SamplingIterator;
 import nom.bdezonia.zorbage.type.complex.float32.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.complex.float64.ComplexFloat64Member;
 import nom.bdezonia.zorbage.type.gaussian.int16.GaussianInt16Member;
@@ -77,7 +75,6 @@ public class Gdal {
 			while ((line=buf.readLine())!=null) {
 				if (line.contains("GDAL"))
 					found = true;
-				//System.out.println(line);
 			}
 			if (!found) {
 				return 1;
@@ -170,27 +167,21 @@ public class Gdal {
 	private static <U extends Allocatable<U>>
 		DimensionedDataSource<U> loadData(Dataset ds, U var, Procedure4<Band, Integer, Integer, U> proc)
 	{
-		int planes = ds.getRasterCount();
+		int numPlanes = ds.getRasterCount();
 		long[] dims;
-		if (planes == 1) {
+		if (numPlanes == 1) {
 			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize()};
 		}
 		else {
-			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), planes};
+			dims = new long[] {ds.getRasterXSize(), ds.GetRasterYSize(), numPlanes};
 		}
 		
 		DimensionedDataSource<U> data = DimensionedStorage.allocate(var, dims);
 		
-		long[] minPt = new long[data.numDimensions()];
-		long[] maxPt = new long[data.numDimensions()];
-		for (int i = 0; i < data.numDimensions(); i++) {
-			maxPt[i] = data.dimension(i) - 1;
-		}
-		for (int i = 0; i < planes; i++) {
-			if (planes > 1) {
-				minPt[2] = i;
-				maxPt[2] = i;
-			}
+		PlaneView<U> planes = new PlaneView<>(data, 0, 1);
+		
+		for (int i = 0; i < numPlanes; i++) {
+			
 			Band band = ds.GetRasterBand(i+1);
 			data.metadata().put("band-"+i+"-description", band.GetDescription());
 			data.metadata().put("band-"+i+"-units", band.GetUnitType());
@@ -204,18 +195,15 @@ public class Gdal {
 					}
 				}
 			}
-			SamplingIterator<IntegerIndex> iter = GridIterator.compute(minPt, maxPt);
-			IntegerIndex index = new IntegerIndex(data.numDimensions());
+
+			if (data.numDimensions() > 2)
+				planes.setPositionValue(0, i);
+			
 			for (int y = 0; y < ds.GetRasterYSize(); y++) {
 				for (int x = 0; x < ds.GetRasterXSize(); x++) {
-					iter.next(index);
 					proc.call(band, x, y, var);
-					data.set(index, var);
+					planes.set(x, y, var);
 				}				
-			}
-			if (planes > 1) {
-				minPt[2] = 0;
-				maxPt[2] = data.dimension(i)-1;
 			}
 		}
 		return data;
