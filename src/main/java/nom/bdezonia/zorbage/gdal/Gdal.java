@@ -26,6 +26,8 @@ package nom.bdezonia.zorbage.gdal;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -36,10 +38,13 @@ import org.gdal.gdalconst.gdalconst;
 
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
+import nom.bdezonia.zorbage.coordinates.CoordinateSpace;
+import nom.bdezonia.zorbage.coordinates.LinearNdCoordinateSpace;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
 import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.dataview.PlaneView;
 import nom.bdezonia.zorbage.misc.DataBundle;
+import nom.bdezonia.zorbage.procedure.Procedure2;
 import nom.bdezonia.zorbage.procedure.Procedure4;
 import nom.bdezonia.zorbage.type.complex.float32.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.complex.float64.ComplexFloat64Member;
@@ -165,7 +170,7 @@ public class Gdal {
 	}
 	
 	private static <U extends Allocatable<U>>
-		DimensionedDataSource<U> loadData(Dataset ds, U var, Procedure4<Band, Integer, Integer, U> proc)
+		DimensionedDataSource<U> loadData(Dataset ds, U var, Procedure2<BandBuffer, U> proc)
 	{
 		int numPlanes = ds.getRasterCount();
 		long[] dims;
@@ -180,9 +185,33 @@ public class Gdal {
 		
 		PlaneView<U> planes = new PlaneView<>(data, 0, 1);
 		
+		int numD = data.numDimensions();
+		
 		for (int i = 0; i < numPlanes; i++) {
 			
 			Band band = ds.GetRasterBand(i+1);
+			if (i == 0) {
+				data.setValueUnit(band.GetUnitType());
+				BigDecimal[] scales = new BigDecimal[numD];
+				BigDecimal[] offsets = new BigDecimal[numD];
+				Double[] scls = new Double[numD];
+				Double[] offs = new Double[numD];
+				band.GetScale(scls);
+				band.GetOffset(offs);
+				boolean definitionsOkay = true;
+				for (int d = 0; d < numD; d++) {
+					if (scls[d] == null) definitionsOkay = false;
+					if (offs[d] == null) definitionsOkay = false;
+				}
+				if (definitionsOkay) {
+					for (int d = 0; d < numD; d++) {
+						scales[d] = BigDecimal.valueOf(scls[d]);
+						offsets[d] = BigDecimal.valueOf(offs[d]);
+					}
+					CoordinateSpace cspace = new LinearNdCoordinateSpace(scales, offsets);
+					data.setCoordinateSpace(cspace);
+				}
+			}
 			data.metadata().put("band-"+i+"-description", band.GetDescription());
 			data.metadata().put("band-"+i+"-units", band.GetUnitType());
 			@SuppressWarnings("unchecked")
@@ -200,8 +229,9 @@ public class Gdal {
 				planes.setPositionValue(0, i);
 			
 			for (int y = 0; y < ds.GetRasterYSize(); y++) {
+				BandBuffer bandBuf = new BandBuffer(band, y, ds.getRasterXSize());
 				for (int x = 0; x < ds.GetRasterXSize(); x++) {
-					proc.call(band, x, y, var);
+					proc.call(bandBuf, var);
 					planes.set(x, y, var);
 				}				
 			}
@@ -210,14 +240,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<UnsignedInt8Member> loadUByteData(Dataset ds, UnsignedInt8Member var) {
-		Procedure4<Band,Integer,Integer,UnsignedInt8Member> proc =
-				new Procedure4<Band, Integer, Integer, UnsignedInt8Member>()
+		Procedure2<BandBuffer,UnsignedInt8Member> proc =
+				new Procedure2<BandBuffer, UnsignedInt8Member>()
 		{
 			private byte[] buffer = new byte[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt8Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, UnsignedInt8Member outVal) {
+				bandBuf.getElemBytes(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -225,14 +255,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<UnsignedInt16Member> loadUShortData(Dataset ds, UnsignedInt16Member var) {
-		Procedure4<Band,Integer,Integer,UnsignedInt16Member> proc =
-				new Procedure4<Band, Integer, Integer, UnsignedInt16Member>()
+		Procedure2<BandBuffer,UnsignedInt16Member> proc =
+				new Procedure2<BandBuffer, UnsignedInt16Member>()
 		{
 			private short[] buffer = new short[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt16Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, UnsignedInt16Member outVal) {
+				bandBuf.getElemShorts(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -240,14 +270,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<SignedInt16Member> loadShortData(Dataset ds, SignedInt16Member var) {
-		Procedure4<Band,Integer,Integer,SignedInt16Member> proc =
-				new Procedure4<Band, Integer, Integer, SignedInt16Member>()
+		Procedure2<BandBuffer,SignedInt16Member> proc =
+				new Procedure2<BandBuffer, SignedInt16Member>()
 		{
 			private short[] buffer = new short[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, SignedInt16Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, SignedInt16Member outVal) {
+				bandBuf.getElemShorts(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -255,14 +285,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<UnsignedInt32Member> loadUIntData(Dataset ds, UnsignedInt32Member var) {
-		Procedure4<Band,Integer,Integer,UnsignedInt32Member> proc =
-				new Procedure4<Band, Integer, Integer, UnsignedInt32Member>()
+		Procedure2<BandBuffer,UnsignedInt32Member> proc =
+				new Procedure2<BandBuffer, UnsignedInt32Member>()
 		{
 			private int[] buffer = new int[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, UnsignedInt32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, UnsignedInt32Member outVal) {
+				bandBuf.getElemInts(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -270,14 +300,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<SignedInt32Member> loadIntData(Dataset ds, SignedInt32Member var) {
-		Procedure4<Band,Integer,Integer,SignedInt32Member> proc =
-				new Procedure4<Band, Integer, Integer, SignedInt32Member>()
+		Procedure2<BandBuffer,SignedInt32Member> proc =
+				new Procedure2<BandBuffer, SignedInt32Member>()
 		{
 			private int[] buffer = new int[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, SignedInt32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, SignedInt32Member outVal) {
+				bandBuf.getElemInts(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -285,14 +315,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<Float32Member> loadFloatData(Dataset ds, Float32Member var) {
-		Procedure4<Band,Integer,Integer,Float32Member> proc =
-				new Procedure4<Band, Integer, Integer, Float32Member>()
+		Procedure2<BandBuffer,Float32Member> proc =
+				new Procedure2<BandBuffer, Float32Member>()
 		{
 			private float[] buffer = new float[1];
 			
 			@Override
-			public void call(Band band, Integer x, Integer y, Float32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, Float32Member outVal) {
+				bandBuf.getElemFloats(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -300,14 +330,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<Float64Member> loadDoubleData(Dataset ds, Float64Member var) {
-		Procedure4<Band,Integer,Integer,Float64Member> proc =
-				new Procedure4<Band, Integer, Integer, Float64Member>()
+		Procedure2<BandBuffer,Float64Member> proc =
+				new Procedure2<BandBuffer, Float64Member>()
 		{
 			private double[] buffer = new double[1];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, Float64Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, Float64Member outVal) {
+				bandBuf.getElemDoubles(buffer);
 				outVal.setV(buffer[0]);
 			}
 		};
@@ -315,14 +345,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<GaussianInt16Member> loadGaussianShortData(Dataset ds, GaussianInt16Member var) {
-		Procedure4<Band,Integer,Integer,GaussianInt16Member> proc =
-				new Procedure4<Band, Integer, Integer, GaussianInt16Member>()
+		Procedure2<BandBuffer,GaussianInt16Member> proc =
+				new Procedure2<BandBuffer, GaussianInt16Member>()
 		{
 			private short[] buffer = new short[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, GaussianInt16Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, GaussianInt16Member outVal) {
+				bandBuf.getElemShorts(buffer);
 				outVal.setR((int) buffer[0]);
 				outVal.setI((int) buffer[1]);
 			}
@@ -331,14 +361,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<GaussianInt32Member> loadGaussianIntData(Dataset ds, GaussianInt32Member var) {
-		Procedure4<Band,Integer,Integer,GaussianInt32Member> proc =
-				new Procedure4<Band, Integer, Integer, GaussianInt32Member>()
+		Procedure2<BandBuffer,GaussianInt32Member> proc =
+				new Procedure2<BandBuffer, GaussianInt32Member>()
 		{
 			private int[] buffer = new int[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, GaussianInt32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, GaussianInt32Member outVal) {
+				bandBuf.getElemInts(buffer);
 				outVal.setR(buffer[0]);
 				outVal.setI(buffer[1]);
 			}
@@ -347,14 +377,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<ComplexFloat32Member> loadComplexFloatData(Dataset ds, ComplexFloat32Member var) {
-		Procedure4<Band,Integer,Integer,ComplexFloat32Member> proc =
-				new Procedure4<Band, Integer, Integer, ComplexFloat32Member>()
+		Procedure2<BandBuffer,ComplexFloat32Member> proc =
+				new Procedure2<BandBuffer, ComplexFloat32Member>()
 		{
 			private float[] buffer = new float[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, ComplexFloat32Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, ComplexFloat32Member outVal) {
+				bandBuf.getElemFloats(buffer);
 				outVal.setR(buffer[0]);
 				outVal.setI(buffer[1]);
 			}
@@ -363,14 +393,14 @@ public class Gdal {
 	}
 
 	private static DimensionedDataSource<ComplexFloat64Member> loadComplexDoubleData(Dataset ds, ComplexFloat64Member var) {
-		Procedure4<Band,Integer,Integer,ComplexFloat64Member> proc =
-				new Procedure4<Band, Integer, Integer, ComplexFloat64Member>()
+		Procedure2<BandBuffer,ComplexFloat64Member> proc =
+				new Procedure2<BandBuffer, ComplexFloat64Member>()
 		{
 			private double[] buffer = new double[2];
 
 			@Override
-			public void call(Band band, Integer x, Integer y, ComplexFloat64Member outVal) {
-				band.ReadRaster(x, y, 1, 1, 1, 1, band.getDataType(), buffer, 0, 0);
+			public void call(BandBuffer bandBuf, ComplexFloat64Member outVal) {
+				bandBuf.getElemDoubles(buffer);
 				outVal.setR(buffer[0]);
 				outVal.setI(buffer[1]);
 			}
@@ -378,4 +408,102 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 	
+	
+	private static class BandBuffer {
+		
+		private Object arr;
+		
+		private int readPtr;
+		
+		BandBuffer(Band band, int row, int elemsPerRow) {
+			
+			this.readPtr = 0;
+			
+			int type = band.getDataType();
+			
+			if (type == gdalconst.GDT_Byte) {
+				arr = new byte[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (byte[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_UInt16) {
+				arr = new short[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (short[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_Int16) {
+				arr = new short[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (short[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_UInt32) {
+				arr = new int[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (int[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_Int32) {
+				arr = new int[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (int[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_Float32) {
+				arr = new float[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (float[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_Float64) {
+				arr = new double[elemsPerRow * 1];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (double[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_CInt16) {
+				arr = new short[elemsPerRow * 2];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (short[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_CInt32) {
+				arr = new int[elemsPerRow * 2];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (int[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_CFloat32) {
+				arr = new float[elemsPerRow * 2];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (float[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_CFloat64) {
+				arr = new double[elemsPerRow * 2];
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (double[])arr, 0, 0);
+			}
+			else
+				throw new IllegalArgumentException("unknown data type in buffering");
+		}
+
+		void getElemBytes(byte[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getByte(arr, readPtr++);
+			}
+		}
+		
+		void getElemShorts(short[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getShort(arr, readPtr++);
+			}
+		}
+		
+		void getElemInts(int[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getInt(arr, readPtr++);
+			}
+		}
+		
+		@SuppressWarnings("unused")
+		void getElemLongs(long[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getLong(arr, readPtr++);
+			}
+		}
+		
+		void getElemFloats(float[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getFloat(arr, readPtr++);
+			}
+		}
+		
+		void getElemDoubles(double[] elem) {
+			for (int i = 0; i < elem.length; i++) {
+				elem[i] = Array.getDouble(arr, readPtr++);
+			}
+		}
+	}
 }
