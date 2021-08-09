@@ -211,15 +211,15 @@ public class Gdal {
 					data.setCoordinateSpace(cspace);
 				}
 			}
-			data.metadata().put("band-"+i+"-description", band.GetDescription());
-			data.metadata().put("band-"+i+"-units", band.GetUnitType());
+			data.metadata().putString("band-"+i+"-description", band.GetDescription());
+			data.metadata().putString("band-"+i+"-units", band.GetUnitType());
 			@SuppressWarnings("unchecked")
 			Hashtable<String,String> table = (Hashtable<String,String>) band.GetMetadata_Dict();
 			for (String key : table.keySet()) {
 				String value = table.get(key);
 				if (key != null && key.length() > 0) {
 					if (value != null && value.length() > 0) {
-						data.metadata().put("band-"+i+"-"+key, value);
+						data.metadata().putString("band-"+i+"-"+key, value);
 					}
 				}
 			}
