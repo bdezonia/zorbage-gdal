@@ -1,7 +1,7 @@
 /*
  * zorbage-gdal: code for using the gdal data file library to open files into zorbage data structures for further processing
  *
- * Copyright (C) 2020-2021 Barry DeZonia
+ * Copyright (C) 2020-2022 Barry DeZonia
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
