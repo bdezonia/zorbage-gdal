@@ -32,6 +32,18 @@ Prerequisites (only Ubuntu instructions below)
   Note: you can also install newer versions of GDAL as binaries
   directly from https://gdal.org/download.html if the repo install
   directions above do not give you a new enough release for your needs.
+  
+  On Ubuntu 22 you may have trouble installing gdal via apt.
+  I have tested that you can build gdal from source and
+  skip the apt-get install gdal-bin command above and things
+  will work fine. I had to specify CMAKE_INSTALL_PREFIX as
+  /usr and GDAL_JAVA_INSTALL_DIR as /usr/java/packages/lib
+  
+  If you go this route then:
+    Find gdal source here:
+      https://trac.osgeo.org/gdal/wiki/DownloadSource
+    Find build instructions here:
+      https://gdal.org/build_hints.html
 
 How to include zorbage-gdal in your Maven project
 
