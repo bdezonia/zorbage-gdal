@@ -28,15 +28,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Group;
-import org.gdal.gdal.MDArray;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
@@ -119,6 +116,12 @@ public class Gdal {
 		return 0;
 	}
 	
+	// TODO
+	// I wrote this because mdArray.getDataType().getName() always
+	//   returned a blank string. Maybe it is a GDAL bug that needs
+	//   fixing.
+	
+	@SuppressWarnings("unused")
 	private static String typeName(int typeNum) {
 
 		if (typeNum == gdalconst.GDT_Byte)
@@ -132,15 +135,18 @@ public class Gdal {
 		
 		if (typeNum == gdalconst.GDT_UInt32)
 			return "32-bit unsigned integer";
-		
+
 		if (typeNum == gdalconst.GDT_Int32)
 			return "32-bit signed integer";
 		
+/*	TODO Revive when INT64 bugs in gdal have been worked out
+	
 		if (typeNum == gdalconst.GDT_UInt64)
 			return "64-bit unsigned integer";
-		
+
 		if (typeNum == gdalconst.GDT_Int64)
 			return "64-bit signed integer";
+*/		
 		
 		if (typeNum == gdalconst.GDT_Float32)
 			return "32-bit float";
@@ -173,18 +179,29 @@ public class Gdal {
 	{
 		final DataBundle resultSets = new DataBundle();
 
-		Dataset ds = gdal.OpenEx(filename, gdalconst.OF_MULTIDIM_RASTER);
+		Dataset ds = null;
+		
+		// TODO restore me when I will use MDARRAY code
+		//Dataset ds = gdal.OpenEx(filename, gdalconst.OF_MULTIDIM_RASTER);
 
+		@SuppressWarnings("unused")
 		final Group group;
 		
 		if (ds == null) {
 			
 			group = null;
 		}
+		/*
 		else {
 		
-			group = ds.GetRootGroup();
+			group = null;
+			
+			// TODO restore me when I will use MDARRAY code
+			// group = ds.GetRootGroup();
 		}
+		*/
+		
+		/*
 
 		// let's deal with a multi dim dataset
 		
@@ -232,7 +249,6 @@ public class Gdal {
 				
 				System.out.println("  and has " + data.GetDimensionCount() + " dimensions.");
 				
-				/*
 				System.out.println("  and structural info:");
 				
 				Hashtable<String,?> ht = data.GetStructuralInfo();
@@ -247,10 +263,12 @@ public class Gdal {
 					
 					System.out.println("    key "+key+" value "+ht.get(key));
 				}
-				*/
 			}
 		}
 		else {
+*/
+		
+		{  // TODO remove this bracket when we do MDArray code
 			
 			// old fashioned 1, 2, or 3 dim image
 
@@ -328,6 +346,8 @@ public class Gdal {
 				
 				bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
 			}
+			/*	TODO Revive when INT64 bugs in gdal have been worked out
+			
 			else if (type == gdalconst.GDT_UInt64) {
 				
 				bundle.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
@@ -336,6 +356,8 @@ public class Gdal {
 				
 				bundle.mergeInt64(loadIntData(ds, G.INT64.construct()));
 			}
+
+			*/
 			else if (type == gdalconst.GDT_Float32) {
 				
 				bundle.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
@@ -584,6 +606,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
+	@SuppressWarnings("unused")
 	private static DimensionedDataSource<UnsignedInt64Member>
 	
 		loadUIntData(Dataset ds, UnsignedInt64Member var)
@@ -605,6 +628,7 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
+	@SuppressWarnings("unused")
 	private static DimensionedDataSource<SignedInt64Member>
 	
 		loadIntData(Dataset ds, SignedInt64Member var)
