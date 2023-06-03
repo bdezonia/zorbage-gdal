@@ -28,13 +28,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
-//import org.gdal.gdal.Group;
-//import org.gdal.gdal.MDArray;
+import org.gdal.gdal.Group;
+import org.gdal.gdal.MDArray;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
@@ -55,6 +57,8 @@ import nom.bdezonia.zorbage.type.integer.int16.SignedInt16Member;
 import nom.bdezonia.zorbage.type.integer.int16.UnsignedInt16Member;
 import nom.bdezonia.zorbage.type.integer.int32.SignedInt32Member;
 import nom.bdezonia.zorbage.type.integer.int32.UnsignedInt32Member;
+import nom.bdezonia.zorbage.type.integer.int64.SignedInt64Member;
+import nom.bdezonia.zorbage.type.integer.int64.UnsignedInt64Member;
 import nom.bdezonia.zorbage.type.integer.int8.UnsignedInt8Member;
 import nom.bdezonia.zorbage.type.real.float32.Float32Member;
 import nom.bdezonia.zorbage.type.real.float64.Float64Member;
@@ -69,7 +73,10 @@ public class Gdal {
 	/**
 	 * This must be called once at startup by users of this gdal interface package
 	 */
-	public static int init() {
+	public static int
+	
+		init()
+	{
 
 		try {
 		
@@ -112,26 +119,78 @@ public class Gdal {
 		return 0;
 	}
 	
+	private static String typeName(int typeNum) {
+
+		if (typeNum == gdalconst.GDT_Byte)
+			return "8-bit unsigned integer";
+		
+		if (typeNum == gdalconst.GDT_UInt16)
+			return "16-bit unsigned integer";
+		
+		if (typeNum == gdalconst.GDT_Int16)
+			return "16-bit signed integer";
+		
+		if (typeNum == gdalconst.GDT_UInt32)
+			return "32-bit unsigned integer";
+		
+		if (typeNum == gdalconst.GDT_Int32)
+			return "32-bit signed integer";
+		
+		if (typeNum == gdalconst.GDT_UInt64)
+			return "64-bit unsigned integer";
+		
+		if (typeNum == gdalconst.GDT_Int64)
+			return "64-bit signed integer";
+		
+		if (typeNum == gdalconst.GDT_Float32)
+			return "32-bit float";
+		
+		if (typeNum == gdalconst.GDT_Float64)
+			return "64-bit float";
+		
+		if (typeNum == gdalconst.GDT_CInt16)
+			return "16-bit gaussian integer";
+		
+		if (typeNum == gdalconst.GDT_CInt32)
+			return "32-bit gaussian integer";
+		
+		if (typeNum == gdalconst.GDT_CFloat32)
+			return "32-bit complex float";
+		
+		if (typeNum == gdalconst.GDT_CFloat64)
+			return "64-bit complex float";
+		
+		return "UNKNOWN DATA TYPE " + typeNum;
+	}
+	
 	/**
 	 * 
 	 * @param filename
 	 */
-	public static DataBundle loadAllDatasets(String filename) {
+	public static DataBundle
+	
+		loadAllDatasets(String filename)
+	{
+		final DataBundle resultSets = new DataBundle();
 
-		DataBundle resultSets = new DataBundle();
+		Dataset ds = gdal.OpenEx(filename, gdalconst.OF_MULTIDIM_RASTER);
 
-		Dataset ds;
-
-/*
-		ds = gdal.Open(filename, gdalconst.OF_MULTIDIM_RASTER);
-
-		Group group = null;
+		final Group group;
 		
-		if (ds != null)
+		if (ds == null) {
+			
+			group = null;
+		}
+		else {
+		
 			group = ds.GetRootGroup();
+		}
 
+		// let's deal with a multi dim dataset
+		
 		if (group != null) {
 			
+			@SuppressWarnings("unchecked")
 			Vector<String> mdArrayNames = (Vector<String>) group.GetMDArrayNames();
 
 			System.out.println("Found "+mdArrayNames.size()+" mdarrays");
@@ -144,12 +203,58 @@ public class Gdal {
 				
 				MDArray data = group.OpenMDArray(name);
 				
-				System.out.println("  and has " + data.GetDimensionCount() + " dimension of  " + data.GetDataType().GetName() + " data.");
+				long nDim = data.GetDimensionCount();
+				
+				if (nDim > Integer.MAX_VALUE) {
+					
+					throw new IllegalArgumentException("cannot handle this many dimensions!");
+				}
+
+				Double[] scales = new Double[(int) nDim];
+				
+				data.GetScale(scales);
+
+				Double[] offsets = new Double[(int) nDim];
+				
+				data.GetOffset(offsets);
+				
+				for (int k = 0; k < nDim; k++) {
+					System.out.println("  axis "+k+" scale "+scales[k]+" offset "+offsets[k]);
+				}
+
+				System.out.println("  name "+data.GetName());
+				
+				System.out.println("  full name "+data.GetFullName());
+				
+				System.out.println("  unit "+data.GetUnit());
+				
+				System.out.println("  data type "+typeName(data.GetDataType().GetNumericDataType()));
+				
+				System.out.println("  and has " + data.GetDimensionCount() + " dimensions.");
+				
+				/*
+				System.out.println("  and structural info:");
+				
+				Hashtable<String,?> ht = data.GetStructuralInfo();
+				
+				Enumeration<String> keys = ht.keys();
+				
+				Iterator<String> iter = keys.asIterator();
+				
+				while (iter.hasNext()) {
+					
+					String key = iter.next();
+					
+					System.out.println("    key "+key+" value "+ht.get(key));
+				}
+				*/
 			}
 		}
 		else {
-*/			
-			ds = gdal.Open(filename);
+			
+			// old fashioned 1, 2, or 3 dim image
+
+			ds = gdal.OpenEx(filename);
 			
 			@SuppressWarnings("unchecked")
 			Vector<String> subdatasetInfo = (Vector<String>) ds.GetMetadata_List("SUBDATASETS");
@@ -223,6 +328,14 @@ public class Gdal {
 				
 				bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
 			}
+			else if (type == gdalconst.GDT_UInt64) {
+				
+				bundle.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
+			}
+			else if (type == gdalconst.GDT_Int64) {
+				
+				bundle.mergeInt64(loadIntData(ds, G.INT64.construct()));
+			}
 			else if (type == gdalconst.GDT_Float32) {
 				
 				bundle.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
@@ -253,15 +366,14 @@ public class Gdal {
 			}
 			
 			resultSets.mergeAll(bundle);
-/*
 		}
-*/
 
 		return resultSets;
 	}
 	
-	private static <U extends Allocatable<U>>
-		DimensionedDataSource<U> loadData(Dataset ds, U var, Procedure2<BandBuffer, U> proc)
+	private static <U extends Allocatable<U>> DimensionedDataSource<U>
+	
+		loadData(Dataset ds, U var, Procedure2<BandBuffer, U> proc)
 	{
 		int numPlanes = ds.getRasterCount();
 		
@@ -464,6 +576,48 @@ public class Gdal {
 			public void call(BandBuffer bandBuf, SignedInt32Member outVal) {
 		
 				bandBuf.getElemInts(buffer);
+				
+				outVal.setV(buffer[0]);
+			}
+		};
+		
+		return loadData(ds, var, proc);
+	}
+
+	private static DimensionedDataSource<UnsignedInt64Member>
+	
+		loadUIntData(Dataset ds, UnsignedInt64Member var)
+	{
+		Procedure2<BandBuffer,UnsignedInt64Member> proc =
+				new Procedure2<BandBuffer, UnsignedInt64Member>()
+		{
+			private long[] buffer = new long[1];
+			
+			@Override
+			public void call(BandBuffer bandBuf, UnsignedInt64Member outVal) {
+		
+				bandBuf.getElemLongs(buffer);
+				
+				outVal.setV(buffer[0]);
+			}
+		};
+		
+		return loadData(ds, var, proc);
+	}
+
+	private static DimensionedDataSource<SignedInt64Member>
+	
+		loadIntData(Dataset ds, SignedInt64Member var)
+	{
+		Procedure2<BandBuffer,SignedInt64Member> proc =
+				new Procedure2<BandBuffer, SignedInt64Member>()
+		{
+			private long[] buffer = new long[1];
+			
+			@Override
+			public void call(BandBuffer bandBuf, SignedInt64Member outVal) {
+		
+				bandBuf.getElemLongs(buffer);
 				
 				outVal.setV(buffer[0]);
 			}
@@ -715,7 +869,6 @@ public class Gdal {
 			}
 		}
 		
-		@SuppressWarnings("unused")
 		void getElemLongs(long[] elem) {
 			
 			for (int i = 0; i < elem.length; i++) {
