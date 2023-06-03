@@ -827,6 +827,20 @@ public class Gdal {
 				
 				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (int[])arr, 0, 0);
 			}
+			/*  TODO Revive when INT64 stuff working
+			else if (type == gdalconst.GDT_UInt64) {
+				
+				arr = new long[elemsPerRow * 1];
+				
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+			}
+			else if (type == gdalconst.GDT_Int64) {
+				
+				arr = new long[elemsPerRow * 1];
+				
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+			}
+			*/
 			else if (type == gdalconst.GDT_Float32) {
 				
 				arr = new float[elemsPerRow * 1];
