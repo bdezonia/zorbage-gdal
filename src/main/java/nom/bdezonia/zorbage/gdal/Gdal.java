@@ -116,59 +116,6 @@ public class Gdal {
 		return 0;
 	}
 	
-	// TODO
-	// I wrote this because mdArray.getDataType().getName() always
-	//   returned a blank string. Maybe it is a GDAL bug that needs
-	//   fixing.
-	
-	@SuppressWarnings("unused")
-	private static String typeName(int typeNum) {
-
-		if (typeNum == gdalconst.GDT_Byte)
-			return "8-bit unsigned integer";
-		
-		if (typeNum == gdalconst.GDT_UInt16)
-			return "16-bit unsigned integer";
-		
-		if (typeNum == gdalconst.GDT_Int16)
-			return "16-bit signed integer";
-		
-		if (typeNum == gdalconst.GDT_UInt32)
-			return "32-bit unsigned integer";
-
-		if (typeNum == gdalconst.GDT_Int32)
-			return "32-bit signed integer";
-		
-/*	TODO Revive when INT64 bugs in gdal have been worked out
-	
-		if (typeNum == gdalconst.GDT_UInt64)
-			return "64-bit unsigned integer";
-
-		if (typeNum == gdalconst.GDT_Int64)
-			return "64-bit signed integer";
-*/		
-		
-		if (typeNum == gdalconst.GDT_Float32)
-			return "32-bit float";
-		
-		if (typeNum == gdalconst.GDT_Float64)
-			return "64-bit float";
-		
-		if (typeNum == gdalconst.GDT_CInt16)
-			return "16-bit gaussian integer";
-		
-		if (typeNum == gdalconst.GDT_CInt32)
-			return "32-bit gaussian integer";
-		
-		if (typeNum == gdalconst.GDT_CFloat32)
-			return "32-bit complex float";
-		
-		if (typeNum == gdalconst.GDT_CFloat64)
-			return "64-bit complex float";
-		
-		return "UNKNOWN DATA TYPE " + typeNum;
-	}
-	
 	/**
 	 * 
 	 * @param filename
@@ -245,7 +192,7 @@ public class Gdal {
 				
 				System.out.println("  unit "+data.GetUnit());
 				
-				System.out.println("  data type "+typeName(data.GetDataType().GetNumericDataType()));
+				System.out.println("  data type "+gdal.GetDataTypeName(data.GetDataType().GetNumericDataType()));
 				
 				System.out.println("  and has " + data.GetDimensionCount() + " dimensions.");
 				
@@ -346,8 +293,6 @@ public class Gdal {
 				
 				bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
 			}
-			/*	TODO Revive when INT64 bugs in gdal have been worked out
-			
 			else if (type == gdalconst.GDT_UInt64) {
 				
 				bundle.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
@@ -356,8 +301,6 @@ public class Gdal {
 				
 				bundle.mergeInt64(loadIntData(ds, G.INT64.construct()));
 			}
-
-			*/
 			else if (type == gdalconst.GDT_Float32) {
 				
 				bundle.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
@@ -606,7 +549,6 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	@SuppressWarnings("unused")
 	private static DimensionedDataSource<UnsignedInt64Member>
 	
 		loadUIntData(Dataset ds, UnsignedInt64Member var)
@@ -628,7 +570,6 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	@SuppressWarnings("unused")
 	private static DimensionedDataSource<SignedInt64Member>
 	
 		loadIntData(Dataset ds, SignedInt64Member var)
@@ -827,20 +768,26 @@ public class Gdal {
 				
 				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (int[])arr, 0, 0);
 			}
-			/*  TODO Revive when INT64 stuff working
 			else if (type == gdalconst.GDT_UInt64) {
 				
 				arr = new long[elemsPerRow * 1];
+
+				// TODO remove exception and uncomment the line after it
 				
-				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+				throw new UnsupportedOperationException("This code won't work until gdal java api jar 3.8.0 has been released");
+
+				//band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
 			}
 			else if (type == gdalconst.GDT_Int64) {
 				
 				arr = new long[elemsPerRow * 1];
+
+				// TODO remove exception and uncomment the line after it
 				
-				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+				throw new UnsupportedOperationException("This code won't work until gdal java api jar 3.8.0 has been released");
+
+				//band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
 			}
-			*/
 			else if (type == gdalconst.GDT_Float32) {
 				
 				arr = new float[elemsPerRow * 1];
