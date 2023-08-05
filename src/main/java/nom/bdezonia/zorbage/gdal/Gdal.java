@@ -56,6 +56,7 @@ import nom.bdezonia.zorbage.type.integer.int32.SignedInt32Member;
 import nom.bdezonia.zorbage.type.integer.int32.UnsignedInt32Member;
 import nom.bdezonia.zorbage.type.integer.int64.SignedInt64Member;
 import nom.bdezonia.zorbage.type.integer.int64.UnsignedInt64Member;
+import nom.bdezonia.zorbage.type.integer.int8.SignedInt8Member;
 import nom.bdezonia.zorbage.type.integer.int8.UnsignedInt8Member;
 import nom.bdezonia.zorbage.type.real.float32.Float32Member;
 import nom.bdezonia.zorbage.type.real.float64.Float64Member;
@@ -277,6 +278,14 @@ public class Gdal {
 
 				bundle.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
 			}
+			/* 
+			 *  restore this code when gdal 3.7.1 jar has been released
+			 * 
+			else if (type == gdalconst.GDT_Int8) {
+
+				bundle.mergeInt8(loadByteData(ds, G.INT8.construct()));
+			}
+			*/
 			else if (type == gdalconst.GDT_UInt16) {
 				
 				bundle.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
@@ -456,6 +465,28 @@ public class Gdal {
 			@Override
 			public void call(BandBuffer bandBuf, UnsignedInt8Member outVal) {
 
+				bandBuf.getElemBytes(buffer);
+				
+				outVal.setV(buffer[0]);
+			}
+		};
+		
+		return loadData(ds, var, proc);
+	}
+
+	@SuppressWarnings("unused")
+	private static DimensionedDataSource<SignedInt8Member>
+	
+		loadByteData(Dataset ds, SignedInt8Member var)
+	{
+		Procedure2<BandBuffer,SignedInt8Member> proc =
+				new Procedure2<BandBuffer, SignedInt8Member>()
+		{
+			private byte[] buffer = new byte[1];
+			
+			@Override
+			public void call(BandBuffer bandBuf, SignedInt8Member outVal) {
+		
 				bandBuf.getElemBytes(buffer);
 				
 				outVal.setV(buffer[0]);
