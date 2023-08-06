@@ -278,14 +278,10 @@ public class Gdal {
 
 				bundle.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
 			}
-			/* 
-			 *  restore this code when gdal 3.7.1 jar has been released
-			 * 
 			else if (type == gdalconst.GDT_Int8) {
 
 				bundle.mergeInt8(loadByteData(ds, G.INT8.construct()));
 			}
-			*/
 			else if (type == gdalconst.GDT_UInt16) {
 				
 				bundle.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
@@ -474,7 +470,6 @@ public class Gdal {
 		return loadData(ds, var, proc);
 	}
 
-	@SuppressWarnings("unused")
 	private static DimensionedDataSource<SignedInt8Member>
 	
 		loadByteData(Dataset ds, SignedInt8Member var)
