@@ -28,12 +28,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.Dimension;
 import org.gdal.gdal.Group;
+import org.gdal.gdal.MDArray;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
@@ -46,6 +50,8 @@ import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.dataview.PlaneView;
 import nom.bdezonia.zorbage.misc.DataBundle;
 import nom.bdezonia.zorbage.procedure.Procedure2;
+import nom.bdezonia.zorbage.sampling.IntegerIndex;
+import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
 import nom.bdezonia.zorbage.type.complex.float32.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.complex.float64.ComplexFloat64Member;
 import nom.bdezonia.zorbage.type.gaussian.int16.GaussianInt16Member;
@@ -121,44 +127,40 @@ public class Gdal {
 	 * 
 	 * @param filename
 	 */
+	@SuppressWarnings("unchecked")
 	public static DataBundle
 	
 		loadAllDatasets(String filename)
 	{
-		final DataBundle resultSets = new DataBundle();
-
-		Dataset ds = null;
+		final DataBundle outputs = new DataBundle();
 		
-		// TODO restore me when I will use MDARRAY code
-		//Dataset ds = gdal.OpenEx(filename, gdalconst.OF_MULTIDIM_RASTER);
+		Dataset ds = gdal.OpenEx(filename, gdalconst.OF_MULTIDIM_RASTER);
 
-		@SuppressWarnings("unused")
 		final Group group;
 		
 		if (ds == null) {
 			
 			group = null;
 		}
-		/*
 		else {
-		
-			group = null;
 			
-			// TODO restore me when I will use MDARRAY code
-			// group = ds.GetRootGroup();
+			group = ds.GetRootGroup();
 		}
-		*/
-		
-		/*
 
-		// let's deal with a multi dim dataset
+
+		// let's deal with a multi dim dataset if we can
+		
+		Vector<String> mdArrayNames =  new Vector<String>();
 		
 		if (group != null) {
 			
-			@SuppressWarnings("unchecked")
-			Vector<String> mdArrayNames = (Vector<String>) group.GetMDArrayNames();
+			//@SuppressWarnings("unchecked")
+			mdArrayNames = (Vector<String>) group.GetMDArrayNames();
 
 			System.out.println("Found "+mdArrayNames.size()+" mdarrays");
+		}
+		
+		if (mdArrayNames.size() > 0) {
 			
 			for (int i = 0; i < mdArrayNames.size(); i++) {
 		
@@ -211,18 +213,77 @@ public class Gdal {
 					
 					System.out.println("    key "+key+" value "+ht.get(key));
 				}
+				
+				int type = data.GetDataType().GetNumericDataType();
+				
+				if (type == gdalconst.GDT_Byte) {
+
+					outputs.mergeUInt8(loadUByteData(data, G.UINT8.construct()));
+				}
+				else if (type == gdalconst.GDT_Int8) {
+
+					outputs.mergeInt8(loadByteData(data, G.INT8.construct()));
+				}
+				else if (type == gdalconst.GDT_UInt16) {
+					
+					outputs.mergeUInt16(loadUShortData(data, G.UINT16.construct()));
+				}
+				else if (type == gdalconst.GDT_Int16) {
+					
+					outputs.mergeInt16(loadShortData(data, G.INT16.construct()));
+				}
+				else if (type == gdalconst.GDT_UInt32) {
+					
+					outputs.mergeUInt32(loadUIntData(data, G.UINT32.construct()));
+				}
+				else if (type == gdalconst.GDT_Int32) {
+					
+					outputs.mergeInt32(loadIntData(data, G.INT32.construct()));
+				}
+				else if (type == gdalconst.GDT_UInt64) {
+					
+					outputs.mergeUInt64(loadULongData(data, G.UINT64.construct()));
+				}
+				else if (type == gdalconst.GDT_Int64) {
+					
+					outputs.mergeInt64(loadLongData(data, G.INT64.construct()));
+				}
+				else if (type == gdalconst.GDT_Float32) {
+					
+					outputs.mergeFlt32(loadFloatData(data, G.FLT.construct()));
+				}
+				else if (type == gdalconst.GDT_Float64) {
+					
+					outputs.mergeFlt64(loadDoubleData(data, G.DBL.construct()));
+				}
+				else if (type == gdalconst.GDT_CInt16) {
+					
+					outputs.mergeGaussianInt16(loadGaussianShortData(data, G.GAUSS16.construct()));
+				}
+				else if (type == gdalconst.GDT_CInt32) {
+					
+					outputs.mergeGaussianInt32(loadGaussianIntData(data, G.GAUSS32.construct()));
+				}
+				else if (type == gdalconst.GDT_CFloat32) {
+					
+					outputs.mergeComplexFlt32(loadComplexFloatData(data, G.CFLT.construct()));
+				}
+				else if (type == gdalconst.GDT_CFloat64) {
+					
+					outputs.mergeComplexFlt64(loadComplexDoubleData(data, G.CDBL.construct()));
+				}
+				else if (type != -1) {
+				
+					System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
+				}
 			}
 		}
 		else {
-*/
 		
-		{  // TODO remove this bracket when we do MDArray code
-			
 			// old fashioned 1, 2, or 3 dim image
-
+	
 			ds = gdal.OpenEx(filename);
 			
-			@SuppressWarnings("unchecked")
 			Vector<String> subdatasetInfo = (Vector<String>) ds.GetMetadata_List("SUBDATASETS");
 			
 			int counter = 1;
@@ -238,16 +299,14 @@ public class Gdal {
 					if (pair.length != 2)
 						throw new IllegalArgumentException("gdal metadata: too many equal signs in internal filename");
 					
-					DataBundle bundle = loadAllDatasets(pair[1]);
+					DataBundle lowerbundle = loadAllDatasets(pair[1]);
 					
-					resultSets.mergeAll(bundle);
+					outputs.mergeAll(lowerbundle);
 					
 					counter++;
 				}
 			}
 	
-			DataBundle bundle = new DataBundle();
-			
 			int type = -1;
 		
 			int xSize = ds.GetRasterXSize();
@@ -259,7 +318,7 @@ public class Gdal {
 				Band band = ds.GetRasterBand(i);
 				
 				if (type == -1) {
-
+	
 					type = band.GetRasterDataType();
 				}
 				
@@ -275,70 +334,68 @@ public class Gdal {
 			}
 			
 			if (type == gdalconst.GDT_Byte) {
-
-				bundle.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
+	
+				outputs.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
 			}
 			else if (type == gdalconst.GDT_Int8) {
-
-				bundle.mergeInt8(loadByteData(ds, G.INT8.construct()));
+	
+				outputs.mergeInt8(loadByteData(ds, G.INT8.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt16) {
 				
-				bundle.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
+				outputs.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
 			}
 			else if (type == gdalconst.GDT_Int16) {
 				
-				bundle.mergeInt16(loadShortData(ds, G.INT16.construct()));
+				outputs.mergeInt16(loadShortData(ds, G.INT16.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt32) {
 				
-				bundle.mergeUInt32(loadUIntData(ds, G.UINT32.construct()));
+				outputs.mergeUInt32(loadUIntData(ds, G.UINT32.construct()));
 			}
 			else if (type == gdalconst.GDT_Int32) {
 				
-				bundle.mergeInt32(loadIntData(ds, G.INT32.construct()));
+				outputs.mergeInt32(loadIntData(ds, G.INT32.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt64) {
 				
-				bundle.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
+				outputs.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
 			}
 			else if (type == gdalconst.GDT_Int64) {
 				
-				bundle.mergeInt64(loadIntData(ds, G.INT64.construct()));
+				outputs.mergeInt64(loadIntData(ds, G.INT64.construct()));
 			}
 			else if (type == gdalconst.GDT_Float32) {
 				
-				bundle.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
+				outputs.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
 			}
 			else if (type == gdalconst.GDT_Float64) {
 				
-				bundle.mergeFlt64(loadDoubleData(ds, G.DBL.construct()));
+				outputs.mergeFlt64(loadDoubleData(ds, G.DBL.construct()));
 			}
 			else if (type == gdalconst.GDT_CInt16) {
 				
-				bundle.mergeGaussianInt16(loadGaussianShortData(ds, G.GAUSS16.construct()));
+				outputs.mergeGaussianInt16(loadGaussianShortData(ds, G.GAUSS16.construct()));
 			}
 			else if (type == gdalconst.GDT_CInt32) {
 				
-				bundle.mergeGaussianInt32(loadGaussianIntData(ds, G.GAUSS32.construct()));
+				outputs.mergeGaussianInt32(loadGaussianIntData(ds, G.GAUSS32.construct()));
 			}
 			else if (type == gdalconst.GDT_CFloat32) {
 				
-				bundle.mergeComplexFlt32(loadComplexFloatData(ds, G.CFLT.construct()));
+				outputs.mergeComplexFlt32(loadComplexFloatData(ds, G.CFLT.construct()));
 			}
 			else if (type == gdalconst.GDT_CFloat64) {
 				
-				bundle.mergeComplexFlt64(loadComplexDoubleData(ds, G.CDBL.construct()));
+				outputs.mergeComplexFlt64(loadComplexDoubleData(ds, G.CDBL.construct()));
 			}
 			else if (type != -1) {
 			
 				System.out.println("Ignoring unknown data type "+gdal.GetDataTypeName(type));
 			}
-			
-			resultSets.mergeAll(bundle);
 		}
 
-		return resultSets;
+		return outputs;
 	}
 	
 	private static <U extends Allocatable<U>> DimensionedDataSource<U>
@@ -451,6 +508,874 @@ public class Gdal {
 
 	private static DimensionedDataSource<UnsignedInt8Member>
 	
+		loadUByteData(MDArray data, UnsignedInt8Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<UnsignedInt8Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		byte[] buffer = new byte[1];
+		
+		UnsignedInt8Member val = new UnsignedInt8Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+
+			val.setFromBytes(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<SignedInt8Member>
+	
+		loadByteData(MDArray data, SignedInt8Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<SignedInt8Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		byte[] buffer = new byte[1];
+		
+		SignedInt8Member val = new SignedInt8Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+
+			val.setFromBytes(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<UnsignedInt16Member>
+	
+		loadUShortData(MDArray data, UnsignedInt16Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<UnsignedInt16Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		short[] buffer = new short[1];
+		
+		UnsignedInt16Member val = new UnsignedInt16Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+
+			val.setFromShorts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<SignedInt16Member>
+	
+		loadShortData(MDArray data, SignedInt16Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<SignedInt16Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		short[] buffer = new short[1];
+		
+		SignedInt16Member val = new SignedInt16Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+
+			val.setFromShorts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<UnsignedInt32Member>
+	
+		loadUIntData(MDArray data, UnsignedInt32Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<UnsignedInt32Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		int[] buffer = new int[1];
+		
+		UnsignedInt32Member val = new UnsignedInt32Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromInts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<SignedInt32Member>
+	
+		loadIntData(MDArray data, SignedInt32Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<SignedInt32Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		int[] buffer = new int[1];
+		
+		SignedInt32Member val = new SignedInt32Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromInts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<UnsignedInt64Member>
+	
+		loadULongData(MDArray data, UnsignedInt64Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<UnsignedInt64Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		long[] buffer = new long[1];
+		
+		UnsignedInt64Member val = new UnsignedInt64Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromLongs(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<SignedInt64Member>
+	
+		loadLongData(MDArray data, SignedInt64Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<SignedInt64Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		long[] buffer = new long[1];
+		
+		SignedInt64Member val = new SignedInt64Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromLongs(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<Float32Member>
+	
+		loadFloatData(MDArray data, Float32Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<Float32Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		float[] buffer = new float[1];
+		
+		Float32Member val = new Float32Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromFloats(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<Float64Member>
+	
+		loadDoubleData(MDArray data, Float64Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<Float64Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		double[] buffer = new double[1];
+		
+		Float64Member val = new Float64Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromDoubles(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<ComplexFloat32Member>
+	
+		loadComplexFloatData(MDArray data, ComplexFloat32Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<ComplexFloat32Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		float[] buffer = new float[2];
+		
+		ComplexFloat32Member val = new ComplexFloat32Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromFloats(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<ComplexFloat64Member>
+	
+		loadComplexDoubleData(MDArray data, ComplexFloat64Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<ComplexFloat64Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		double[] buffer = new double[2];
+		
+		ComplexFloat64Member val = new ComplexFloat64Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromDoubles(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<GaussianInt16Member>
+	
+		loadGaussianShortData(MDArray data, GaussianInt16Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<GaussianInt16Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		short[] buffer = new short[2];
+		
+		GaussianInt16Member val = new GaussianInt16Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromShorts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<GaussianInt32Member>
+	
+		loadGaussianIntData(MDArray data, GaussianInt32Member var)
+	{
+		Dimension[] dims = data.GetDimensions();
+	
+		long[] gdalDims = new long[dims.length];
+		
+		long[] zorbDims = new long[dims.length];
+	
+		for (int i = 0; i < dims.length; i++) {
+			
+			gdalDims[i] = dims[i].GetSize();
+			
+			zorbDims[dims.length - 1 - i] = gdalDims[i];
+		}
+		
+		DimensionedDataSource<GaussianInt32Member> output =
+				
+				DimensionedStorage.allocate(var.duplicate(), zorbDims);
+		
+		int[] buffer = new int[2];
+		
+		GaussianInt32Member val = new GaussianInt32Member();
+		
+		IntegerIndex idx = new IntegerIndex(dims.length);
+		
+		long[] gdalCoords = new long[dims.length];
+		
+		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
+		
+		long[] ones = new long[dims.length];
+		
+		for (int i = 0; i < ones.length; i++) {
+			ones[i] = 1;
+		}
+	
+		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
+				
+				new SamplingCartesianIntegerGrid(gdalDims).iterator();
+	
+		while (iter.hasNext()) {
+			
+			iter.next(idx);
+			
+			for (int i = 0; i < dims.length; i++) {
+				
+				gdalCoords[i] = idx.get(i);
+				
+				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
+			}
+			
+			data.Read(gdalCoords, ones, buffer);
+	
+			val.setFromInts(buffer);
+			
+			output.set(zorbCoords, val);
+		}
+		
+		return output;
+	}
+
+	private static DimensionedDataSource<UnsignedInt8Member>
+	
 		loadUByteData(Dataset ds, UnsignedInt8Member var)
 	{
 		Procedure2<BandBuffer,UnsignedInt8Member> proc =
@@ -460,7 +1385,7 @@ public class Gdal {
 			
 			@Override
 			public void call(BandBuffer bandBuf, UnsignedInt8Member outVal) {
-
+	
 				bandBuf.getElemBytes(buffer);
 				
 				outVal.setV(buffer[0]);
