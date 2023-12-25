@@ -44,12 +44,6 @@ import org.gdal.gdalconst.gdalconst;
 import nom.bdezonia.zorbage.algebra.Algebra;
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
-import nom.bdezonia.zorbage.algebra.SetFromBytes;
-import nom.bdezonia.zorbage.algebra.SetFromDoubles;
-import nom.bdezonia.zorbage.algebra.SetFromFloats;
-import nom.bdezonia.zorbage.algebra.SetFromInts;
-import nom.bdezonia.zorbage.algebra.SetFromLongs;
-import nom.bdezonia.zorbage.algebra.SetFromShorts;
 import nom.bdezonia.zorbage.coordinates.CoordinateSpace;
 import nom.bdezonia.zorbage.coordinates.LinearNdCoordinateSpace;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
@@ -57,6 +51,7 @@ import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.dataview.PlaneView;
 import nom.bdezonia.zorbage.misc.DataBundle;
 import nom.bdezonia.zorbage.procedure.Procedure2;
+import nom.bdezonia.zorbage.procedure.Procedure3;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
 import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
 import nom.bdezonia.zorbage.type.complex.float32.ComplexFloat32Member;
@@ -225,59 +220,59 @@ public class Gdal {
 				
 				if (type == gdalconst.GDT_Byte) {
 
-					outputs.mergeUInt8(loadUByteData(data, G.UINT8.construct()));
+					outputs.mergeUInt8(readMDArrayUByteData(data, G.UINT8.construct()));
 				}
 				else if (type == gdalconst.GDT_Int8) {
 
-					outputs.mergeInt8(loadByteData(data, G.INT8.construct()));
+					outputs.mergeInt8(readMDArrayByteData(data, G.INT8.construct()));
 				}
 				else if (type == gdalconst.GDT_UInt16) {
 					
-					outputs.mergeUInt16(loadUShortData(data, G.UINT16.construct()));
+					outputs.mergeUInt16(readMDArrayUShortData(data, G.UINT16.construct()));
 				}
 				else if (type == gdalconst.GDT_Int16) {
 					
-					outputs.mergeInt16(loadShortData(data, G.INT16.construct()));
+					outputs.mergeInt16(readMDArrayShortData(data, G.INT16.construct()));
 				}
 				else if (type == gdalconst.GDT_UInt32) {
 					
-					outputs.mergeUInt32(loadUIntData(data, G.UINT32.construct()));
+					outputs.mergeUInt32(readMDArrayUIntData(data, G.UINT32.construct()));
 				}
 				else if (type == gdalconst.GDT_Int32) {
 					
-					outputs.mergeInt32(loadIntData(data, G.INT32.construct()));
+					outputs.mergeInt32(readMDArrayIntData(data, G.INT32.construct()));
 				}
 				else if (type == gdalconst.GDT_UInt64) {
 					
-					outputs.mergeUInt64(loadULongData(data, G.UINT64.construct()));
+					outputs.mergeUInt64(readMDArrayULongData(data, G.UINT64.construct()));
 				}
 				else if (type == gdalconst.GDT_Int64) {
 					
-					outputs.mergeInt64(loadLongData(data, G.INT64.construct()));
+					outputs.mergeInt64(readMDArrayLongData(data, G.INT64.construct()));
 				}
 				else if (type == gdalconst.GDT_Float32) {
 					
-					outputs.mergeFlt32(loadFloatData(data, G.FLT.construct()));
+					outputs.mergeFlt32(readMDArrayFloatData(data, G.FLT.construct()));
 				}
 				else if (type == gdalconst.GDT_Float64) {
 					
-					outputs.mergeFlt64(loadDoubleData(data, G.DBL.construct()));
+					outputs.mergeFlt64(readMDArrayDoubleData(data, G.DBL.construct()));
 				}
 				else if (type == gdalconst.GDT_CInt16) {
 					
-					outputs.mergeGaussianInt16(loadGaussianShortData(data, G.GAUSS16.construct()));
+					outputs.mergeGaussianInt16(readMDArrayGaussianShortData(data, G.GAUSS16.construct()));
 				}
 				else if (type == gdalconst.GDT_CInt32) {
 					
-					outputs.mergeGaussianInt32(loadGaussianIntData(data, G.GAUSS32.construct()));
+					outputs.mergeGaussianInt32(readMDArrayGaussianIntData(data, G.GAUSS32.construct()));
 				}
 				else if (type == gdalconst.GDT_CFloat32) {
 					
-					outputs.mergeComplexFlt32(loadComplexFloatData(data, G.CFLT.construct()));
+					outputs.mergeComplexFlt32(readMDArrayComplexFloatData(data, G.CFLT.construct()));
 				}
 				else if (type == gdalconst.GDT_CFloat64) {
 					
-					outputs.mergeComplexFlt64(loadComplexDoubleData(data, G.CDBL.construct()));
+					outputs.mergeComplexFlt64(readMDArrayComplexDoubleData(data, G.CDBL.construct()));
 				}
 				else if (type != -1) {
 				
@@ -342,59 +337,59 @@ public class Gdal {
 			
 			if (type == gdalconst.GDT_Byte) {
 	
-				outputs.mergeUInt8(loadUByteData(ds, G.UINT8.construct()));
+				outputs.mergeUInt8(readBandedUByteData(ds, G.UINT8.construct()));
 			}
 			else if (type == gdalconst.GDT_Int8) {
 	
-				outputs.mergeInt8(loadByteData(ds, G.INT8.construct()));
+				outputs.mergeInt8(readBandedByteData(ds, G.INT8.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt16) {
 				
-				outputs.mergeUInt16(loadUShortData(ds, G.UINT16.construct()));
+				outputs.mergeUInt16(readBandedUShortData(ds, G.UINT16.construct()));
 			}
 			else if (type == gdalconst.GDT_Int16) {
 				
-				outputs.mergeInt16(loadShortData(ds, G.INT16.construct()));
+				outputs.mergeInt16(readBandedShortData(ds, G.INT16.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt32) {
 				
-				outputs.mergeUInt32(loadUIntData(ds, G.UINT32.construct()));
+				outputs.mergeUInt32(readBandedUIntData(ds, G.UINT32.construct()));
 			}
 			else if (type == gdalconst.GDT_Int32) {
 				
-				outputs.mergeInt32(loadIntData(ds, G.INT32.construct()));
+				outputs.mergeInt32(readBandedIntData(ds, G.INT32.construct()));
 			}
 			else if (type == gdalconst.GDT_UInt64) {
 				
-				outputs.mergeUInt64(loadUIntData(ds, G.UINT64.construct()));
+				outputs.mergeUInt64(readBandedUIntData(ds, G.UINT64.construct()));
 			}
 			else if (type == gdalconst.GDT_Int64) {
 				
-				outputs.mergeInt64(loadIntData(ds, G.INT64.construct()));
+				outputs.mergeInt64(readBandedIntData(ds, G.INT64.construct()));
 			}
 			else if (type == gdalconst.GDT_Float32) {
 				
-				outputs.mergeFlt32(loadFloatData(ds, G.FLT.construct()));
+				outputs.mergeFlt32(readBandedFloatData(ds, G.FLT.construct()));
 			}
 			else if (type == gdalconst.GDT_Float64) {
 				
-				outputs.mergeFlt64(loadDoubleData(ds, G.DBL.construct()));
+				outputs.mergeFlt64(readBandedDoubleData(ds, G.DBL.construct()));
 			}
 			else if (type == gdalconst.GDT_CInt16) {
 				
-				outputs.mergeGaussianInt16(loadGaussianShortData(ds, G.GAUSS16.construct()));
+				outputs.mergeGaussianInt16(readBandedGaussianShortData(ds, G.GAUSS16.construct()));
 			}
 			else if (type == gdalconst.GDT_CInt32) {
 				
-				outputs.mergeGaussianInt32(loadGaussianIntData(ds, G.GAUSS32.construct()));
+				outputs.mergeGaussianInt32(readBandedGaussianIntData(ds, G.GAUSS32.construct()));
 			}
 			else if (type == gdalconst.GDT_CFloat32) {
 				
-				outputs.mergeComplexFlt32(loadComplexFloatData(ds, G.CFLT.construct()));
+				outputs.mergeComplexFlt32(readBandedComplexFloatData(ds, G.CFLT.construct()));
 			}
 			else if (type == gdalconst.GDT_CFloat64) {
 				
-				outputs.mergeComplexFlt64(loadComplexDoubleData(ds, G.CDBL.construct()));
+				outputs.mergeComplexFlt64(readBandedComplexDoubleData(ds, G.CDBL.construct()));
 			}
 			else if (type != -1) {
 			
@@ -407,7 +402,7 @@ public class Gdal {
 	
 	private static <U extends Allocatable<U>> DimensionedDataSource<U>
 	
-		loadData(Dataset ds, U var, Procedure2<BandBuffer, U> proc)
+		readBandedData(Dataset ds, U var, Procedure2<BandBuffer, U> proc)
 	{
 		int numPlanes = ds.getRasterCount();
 		
@@ -513,153 +508,20 @@ public class Gdal {
 		return data;
 	}
 
-	interface BufferIO<U> {
+	private static long[] ones(int count) {
 		
-		void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones);
-		void readFromBufferIntoValue(U value);
-	}
-	
-	private static class ByteBufferIO<U extends SetFromBytes> implements BufferIO<U> {
-		
-		private byte[] buffer;
-		
-		ByteBufferIO(int bufSize) {
-			
-			buffer = new byte[bufSize];
+		long[] vals = new long[count];
+		for (int i = 0; i < count; i++) {
+			vals[i] = 1;
 		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromBytes(buffer);
-		}
-		
-	}
-	
-	private static class ShortBufferIO<U extends SetFromShorts> implements BufferIO<U> {
-		
-		private short[] buffer;
-		
-		ShortBufferIO(int bufSize) {
-			
-			buffer = new short[bufSize];
-		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromShorts(buffer);
-		}
-		
-	}
-	
-	private static class IntBufferIO<U extends SetFromInts> implements BufferIO<U> {
-		
-		private int[] buffer;
-		
-		IntBufferIO(int bufSize) {
-			
-			buffer = new int[bufSize];
-		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromInts(buffer);
-		}
-		
-	}
-	
-	private static class LongBufferIO<U extends SetFromLongs> implements BufferIO<U> {
-		
-		private long[] buffer;
-		
-		LongBufferIO(int bufSize) {
-			
-			buffer = new long[bufSize];
-		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromLongs(buffer);
-		}
-		
-	}
-	
-	private static class FloatBufferIO<U extends SetFromFloats> implements BufferIO<U> {
-		
-		private float[] buffer;
-		
-		FloatBufferIO(int bufSize) {
-			
-			buffer = new float[bufSize];
-		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromFloats(buffer);
-		}
-		
-	}
-	
-	private static class DoubleBufferIO<U extends SetFromDoubles> implements BufferIO<U> {
-		
-		private double[] buffer;
-		
-		DoubleBufferIO(int bufSize) {
-			
-			buffer = new double[bufSize];
-		}
-		
-		@Override
-		public void readGdalDataIntoBuffer(MDArray data, long[] gdalCoords, long[] ones) {
-			
-			data.Read(gdalCoords, ones, buffer);
-		}
-		
-		@Override
-		public void readFromBufferIntoValue(U value) {
-			
-			value.setFromDoubles(buffer);
-		}
-		
+		return vals;
 	}
 	
 	private static <T extends Algebra<T,U>, U extends Allocatable<U>>
 	
-		DimensionedDataSource<U> readData(MDArray data, U type, BufferIO<U> io)
+		DimensionedDataSource<U>
+	
+			readMDArrayData(MDArray data, U type, Procedure3<MDArray,long[],U> proc)
 	{
 		Dimension[] dims = data.GetDimensions();
 
@@ -686,12 +548,6 @@ public class Gdal {
 		
 		IntegerIndex zorbCoords = new IntegerIndex(dims.length);
 		
-		long[] ones = new long[dims.length];
-		
-		for (int i = 0; i < ones.length; i++) {
-			ones[i] = 1;
-		}
-
 		nom.bdezonia.zorbage.sampling.SamplingIterator<IntegerIndex> iter =
 				
 				new SamplingCartesianIntegerGrid(gdalDims).iterator();
@@ -706,10 +562,8 @@ public class Gdal {
 				
 				zorbCoords.set(dims.length - 1 - i, gdalCoords[i]);
 			}
-			
-			io.readGdalDataIntoBuffer(data, gdalCoords, ones);
-			
-			io.readFromBufferIntoValue(val);
+
+			proc.call(data, gdalCoords, val);
 			
 			output.set(zorbCoords, val);
 		}
@@ -738,112 +592,364 @@ public class Gdal {
 
 		output.setCoordinateSpace(space);
 		
-		// TODO set MetaData based upon gdal attributes?????
+		// TODO set more MetaData based upon gdal attributes?????
 		
 		return output;
 	}
 	
 	private static DimensionedDataSource<UnsignedInt8Member>
 	
-		loadUByteData(MDArray data, UnsignedInt8Member var)
+		readMDArrayUByteData(MDArray data, UnsignedInt8Member var)
 	{
-		return readData(data, var, new ByteBufferIO<UnsignedInt8Member>(1));
+		Procedure3<MDArray, long[], UnsignedInt8Member> proc =
+				new Procedure3<MDArray, long[], UnsignedInt8Member>()
+		{
+			private byte[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, UnsignedInt8Member value) {
+
+				if (buffer == null) {
+					buffer = new byte[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromBytes(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt8Member>
 	
-		loadByteData(MDArray data, SignedInt8Member var)
+		readMDArrayByteData(MDArray data, SignedInt8Member var)
 	{
-		return readData(data, var, new ByteBufferIO<SignedInt8Member>(1));
+		Procedure3<MDArray, long[], SignedInt8Member> proc =
+				new Procedure3<MDArray, long[], SignedInt8Member>()
+		{
+			private byte[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, SignedInt8Member value) {
+
+				if (buffer == null) {
+					buffer = new byte[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromBytes(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt16Member>
 	
-		loadUShortData(MDArray data, UnsignedInt16Member var)
+		readMDArrayUShortData(MDArray data, UnsignedInt16Member var)
 	{
-		return readData(data, var, new ShortBufferIO<UnsignedInt16Member>(1));
+		Procedure3<MDArray, long[], UnsignedInt16Member> proc =
+				new Procedure3<MDArray, long[], UnsignedInt16Member>()
+		{
+			private short[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, UnsignedInt16Member value) {
+
+				if (buffer == null) {
+					buffer = new short[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromShorts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt16Member>
 	
-		loadShortData(MDArray data, SignedInt16Member var)
+		readMDArrayShortData(MDArray data, SignedInt16Member var)
 	{
-		return readData(data, var, new ShortBufferIO<SignedInt16Member>(1));
+		Procedure3<MDArray, long[], SignedInt16Member> proc =
+				new Procedure3<MDArray, long[], SignedInt16Member>()
+		{
+			private short[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, SignedInt16Member value) {
+
+				if (buffer == null) {
+					buffer = new short[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromShorts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt32Member>
 	
-		loadUIntData(MDArray data, UnsignedInt32Member var)
+		readMDArrayUIntData(MDArray data, UnsignedInt32Member var)
 	{
-		return readData(data, var, new IntBufferIO<UnsignedInt32Member>(1));
+		Procedure3<MDArray, long[], UnsignedInt32Member> proc =
+				new Procedure3<MDArray, long[], UnsignedInt32Member>()
+		{
+			private int[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, UnsignedInt32Member value) {
+
+				if (buffer == null) {
+					buffer = new int[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromInts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt32Member>
 	
-		loadIntData(MDArray data, SignedInt32Member var)
+		readMDArrayIntData(MDArray data, SignedInt32Member var)
 	{
-		return readData(data, var, new IntBufferIO<SignedInt32Member>(1));
+		Procedure3<MDArray, long[], SignedInt32Member> proc =
+				new Procedure3<MDArray, long[], SignedInt32Member>()
+		{
+			private int[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, SignedInt32Member value) {
+
+				if (buffer == null) {
+					buffer = new int[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromInts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt64Member>
 	
-		loadULongData(MDArray data, UnsignedInt64Member var)
+		readMDArrayULongData(MDArray data, UnsignedInt64Member var)
 	{
-		return readData(data, var, new LongBufferIO<UnsignedInt64Member>(1));
+		Procedure3<MDArray, long[], UnsignedInt64Member> proc =
+				new Procedure3<MDArray, long[], UnsignedInt64Member>()
+		{
+			private long[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, UnsignedInt64Member value) {
+
+				if (buffer == null) {
+					buffer = new long[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromLongs(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt64Member>
 	
-		loadLongData(MDArray data, SignedInt64Member var)
+		readMDArrayLongData(MDArray data, SignedInt64Member var)
 	{
-		return readData(data, var, new LongBufferIO<SignedInt64Member>(1));
+		Procedure3<MDArray, long[], SignedInt64Member> proc =
+				new Procedure3<MDArray, long[], SignedInt64Member>()
+		{
+			private long[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, SignedInt64Member value) {
+
+				if (buffer == null) {
+					buffer = new long[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromLongs(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<Float32Member>
 	
-		loadFloatData(MDArray data, Float32Member var)
+		readMDArrayFloatData(MDArray data, Float32Member var)
 	{
-		return readData(data, var, new FloatBufferIO<Float32Member>(1));
+		Procedure3<MDArray, long[], Float32Member> proc =
+				new Procedure3<MDArray, long[], Float32Member>()
+		{
+			private float[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, Float32Member value) {
+
+				if (buffer == null) {
+					buffer = new float[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromFloats(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<Float64Member>
 	
-		loadDoubleData(MDArray data, Float64Member var)
+		readMDArrayDoubleData(MDArray data, Float64Member var)
 	{
-		return readData(data, var, new DoubleBufferIO<Float64Member>(1));
+		Procedure3<MDArray, long[], Float64Member> proc =
+				new Procedure3<MDArray, long[], Float64Member>()
+		{
+			private double[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, Float64Member value) {
+
+				if (buffer == null) {
+					buffer = new double[1];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromDoubles(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<ComplexFloat32Member>
 	
-		loadComplexFloatData(MDArray data, ComplexFloat32Member var)
+		readMDArrayComplexFloatData(MDArray data, ComplexFloat32Member var)
 	{
-		return readData(data, var, new FloatBufferIO<ComplexFloat32Member>(2));
+		Procedure3<MDArray, long[], ComplexFloat32Member> proc =
+				new Procedure3<MDArray, long[], ComplexFloat32Member>()
+		{
+			private float[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, ComplexFloat32Member value) {
+
+				if (buffer == null) {
+					buffer = new float[2];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromFloats(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<ComplexFloat64Member>
 	
-		loadComplexDoubleData(MDArray data, ComplexFloat64Member var)
+		readMDArrayComplexDoubleData(MDArray data, ComplexFloat64Member var)
 	{
-		return readData(data, var, new DoubleBufferIO<ComplexFloat64Member>(2));
+		Procedure3<MDArray, long[], ComplexFloat64Member> proc =
+				new Procedure3<MDArray, long[], ComplexFloat64Member>()
+		{
+			private double[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, ComplexFloat64Member value) {
+
+				if (buffer == null) {
+					buffer = new double[2];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromDoubles(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<GaussianInt16Member>
 	
-		loadGaussianShortData(MDArray data, GaussianInt16Member var)
+		readMDArrayGaussianShortData(MDArray data, GaussianInt16Member var)
 	{
-		return readData(data, var, new ShortBufferIO<GaussianInt16Member>(2));
+		Procedure3<MDArray, long[], GaussianInt16Member> proc =
+				new Procedure3<MDArray, long[], GaussianInt16Member>()
+		{
+			private short[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, GaussianInt16Member value) {
+
+				if (buffer == null) {
+					buffer = new short[2];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromShorts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<GaussianInt32Member>
 	
-		loadGaussianIntData(MDArray data, GaussianInt32Member var)
+		readMDArrayGaussianIntData(MDArray data, GaussianInt32Member var)
 	{
-		return readData(data, var, new IntBufferIO<GaussianInt32Member>(2));
+		Procedure3<MDArray, long[], GaussianInt32Member> proc =
+				new Procedure3<MDArray, long[], GaussianInt32Member>()
+		{
+			private int[] buffer;
+			private long[] ones;
+			
+			@Override
+			public void call(MDArray data, long[] coord, GaussianInt32Member value) {
+
+				if (buffer == null) {
+					buffer = new int[2];
+					ones = ones((int) data.GetDimensionCount());
+				}
+				data.Read(coord, ones, buffer);
+				value.setFromInts(buffer);
+			}
+		};
+				
+		return readMDArrayData(data, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt8Member>
 	
-		loadUByteData(Dataset ds, UnsignedInt8Member var)
+		readBandedUByteData(Dataset ds, UnsignedInt8Member var)
 	{
 		Procedure2<BandBuffer,UnsignedInt8Member> proc =
 				new Procedure2<BandBuffer, UnsignedInt8Member>()
@@ -859,12 +965,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt8Member>
 	
-		loadByteData(Dataset ds, SignedInt8Member var)
+		readBandedByteData(Dataset ds, SignedInt8Member var)
 	{
 		Procedure2<BandBuffer,SignedInt8Member> proc =
 				new Procedure2<BandBuffer, SignedInt8Member>()
@@ -880,12 +986,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt16Member>
 	
-		loadUShortData(Dataset ds, UnsignedInt16Member var)
+		readBandedUShortData(Dataset ds, UnsignedInt16Member var)
 	{
 		Procedure2<BandBuffer,UnsignedInt16Member> proc =
 				new Procedure2<BandBuffer, UnsignedInt16Member>()
@@ -901,12 +1007,12 @@ public class Gdal {
 			}
 		};
 
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt16Member>
 	
-		loadShortData(Dataset ds, SignedInt16Member var)
+		readBandedShortData(Dataset ds, SignedInt16Member var)
 	{
 		Procedure2<BandBuffer,SignedInt16Member> proc =
 				new Procedure2<BandBuffer, SignedInt16Member>()
@@ -922,12 +1028,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt32Member>
 	
-		loadUIntData(Dataset ds, UnsignedInt32Member var)
+		readBandedUIntData(Dataset ds, UnsignedInt32Member var)
 	{
 		Procedure2<BandBuffer,UnsignedInt32Member> proc =
 				new Procedure2<BandBuffer, UnsignedInt32Member>()
@@ -943,12 +1049,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt32Member>
 	
-		loadIntData(Dataset ds, SignedInt32Member var)
+		readBandedIntData(Dataset ds, SignedInt32Member var)
 	{
 		Procedure2<BandBuffer,SignedInt32Member> proc =
 				new Procedure2<BandBuffer, SignedInt32Member>()
@@ -964,12 +1070,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<UnsignedInt64Member>
 	
-		loadUIntData(Dataset ds, UnsignedInt64Member var)
+		readBandedUIntData(Dataset ds, UnsignedInt64Member var)
 	{
 		Procedure2<BandBuffer,UnsignedInt64Member> proc =
 				new Procedure2<BandBuffer, UnsignedInt64Member>()
@@ -985,12 +1091,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<SignedInt64Member>
 	
-		loadIntData(Dataset ds, SignedInt64Member var)
+		readBandedIntData(Dataset ds, SignedInt64Member var)
 	{
 		Procedure2<BandBuffer,SignedInt64Member> proc =
 				new Procedure2<BandBuffer, SignedInt64Member>()
@@ -1006,12 +1112,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<Float32Member>
 	
-		loadFloatData(Dataset ds, Float32Member var)
+		readBandedFloatData(Dataset ds, Float32Member var)
 	{
 		Procedure2<BandBuffer,Float32Member> proc =
 				new Procedure2<BandBuffer, Float32Member>()
@@ -1027,12 +1133,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<Float64Member>
 	
-		loadDoubleData(Dataset ds, Float64Member var)
+		readBandedDoubleData(Dataset ds, Float64Member var)
 	{
 		Procedure2<BandBuffer,Float64Member> proc =
 				new Procedure2<BandBuffer, Float64Member>()
@@ -1048,12 +1154,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<GaussianInt16Member>
 	
-		loadGaussianShortData(Dataset ds, GaussianInt16Member var)
+		readBandedGaussianShortData(Dataset ds, GaussianInt16Member var)
 	{
 		Procedure2<BandBuffer,GaussianInt16Member> proc =
 				new Procedure2<BandBuffer, GaussianInt16Member>()
@@ -1071,12 +1177,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<GaussianInt32Member>
 	
-		loadGaussianIntData(Dataset ds, GaussianInt32Member var)
+		readBandedGaussianIntData(Dataset ds, GaussianInt32Member var)
 	{
 		Procedure2<BandBuffer,GaussianInt32Member> proc =
 				new Procedure2<BandBuffer, GaussianInt32Member>()
@@ -1094,12 +1200,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<ComplexFloat32Member>
 	
-		loadComplexFloatData(Dataset ds, ComplexFloat32Member var)
+		readBandedComplexFloatData(Dataset ds, ComplexFloat32Member var)
 	{
 		Procedure2<BandBuffer,ComplexFloat32Member> proc =
 				new Procedure2<BandBuffer, ComplexFloat32Member>()
@@ -1117,12 +1223,12 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 
 	private static DimensionedDataSource<ComplexFloat64Member>
 	
-		loadComplexDoubleData(Dataset ds, ComplexFloat64Member var)
+		readBandedComplexDoubleData(Dataset ds, ComplexFloat64Member var)
 	{
 		Procedure2<BandBuffer,ComplexFloat64Member> proc =
 				new Procedure2<BandBuffer, ComplexFloat64Member>()
@@ -1140,7 +1246,7 @@ public class Gdal {
 			}
 		};
 		
-		return loadData(ds, var, proc);
+		return readBandedData(ds, var, proc);
 	}
 	
 	
