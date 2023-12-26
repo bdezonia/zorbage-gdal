@@ -601,19 +601,16 @@ public class Gdal {
 	
 		readMDArrayUByteData(MDArray data, UnsignedInt8Member var)
 	{
+		byte[] buffer = new byte[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], UnsignedInt8Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt8Member>()
 		{
-			private byte[] buffer;
-			private long[] ones;
 			
 			@Override
 			public void call(MDArray data, long[] coord, UnsignedInt8Member value) {
 
-				if (buffer == null) {
-					buffer = new byte[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromBytes(buffer);
 			}
@@ -626,19 +623,15 @@ public class Gdal {
 	
 		readMDArrayByteData(MDArray data, SignedInt8Member var)
 	{
+		byte[] buffer = new byte[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], SignedInt8Member> proc =
 				new Procedure3<MDArray, long[], SignedInt8Member>()
 		{
-			private byte[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, SignedInt8Member value) {
 
-				if (buffer == null) {
-					buffer = new byte[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromBytes(buffer);
 			}
@@ -654,16 +647,12 @@ public class Gdal {
 		Procedure3<MDArray, long[], UnsignedInt16Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt16Member>()
 		{
-			private short[] buffer;
-			private long[] ones;
-			
+			short[] buffer = new short[1];
+			long[] ones = ones((int) data.GetDimensionCount());
+
 			@Override
 			public void call(MDArray data, long[] coord, UnsignedInt16Member value) {
 
-				if (buffer == null) {
-					buffer = new short[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromShorts(buffer);
 			}
@@ -676,19 +665,15 @@ public class Gdal {
 	
 		readMDArrayShortData(MDArray data, SignedInt16Member var)
 	{
+		short[] buffer = new short[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], SignedInt16Member> proc =
 				new Procedure3<MDArray, long[], SignedInt16Member>()
 		{
-			private short[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, SignedInt16Member value) {
 
-				if (buffer == null) {
-					buffer = new short[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromShorts(buffer);
 			}
@@ -701,19 +686,15 @@ public class Gdal {
 	
 		readMDArrayUIntData(MDArray data, UnsignedInt32Member var)
 	{
+		int[] buffer = new int[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], UnsignedInt32Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt32Member>()
 		{
-			private int[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, UnsignedInt32Member value) {
 
-				if (buffer == null) {
-					buffer = new int[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromInts(buffer);
 			}
@@ -726,19 +707,15 @@ public class Gdal {
 	
 		readMDArrayIntData(MDArray data, SignedInt32Member var)
 	{
+		int[] buffer = new int[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], SignedInt32Member> proc =
 				new Procedure3<MDArray, long[], SignedInt32Member>()
 		{
-			private int[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, SignedInt32Member value) {
 
-				if (buffer == null) {
-					buffer = new int[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromInts(buffer);
 			}
@@ -751,19 +728,15 @@ public class Gdal {
 	
 		readMDArrayULongData(MDArray data, UnsignedInt64Member var)
 	{
+		long[] buffer = new long[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], UnsignedInt64Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt64Member>()
 		{
-			private long[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, UnsignedInt64Member value) {
 
-				if (buffer == null) {
-					buffer = new long[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromLongs(buffer);
 			}
@@ -776,19 +749,15 @@ public class Gdal {
 	
 		readMDArrayLongData(MDArray data, SignedInt64Member var)
 	{
+		long[] buffer = new long[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], SignedInt64Member> proc =
 				new Procedure3<MDArray, long[], SignedInt64Member>()
 		{
-			private long[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, SignedInt64Member value) {
 
-				if (buffer == null) {
-					buffer = new long[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromLongs(buffer);
 			}
@@ -801,19 +770,15 @@ public class Gdal {
 	
 		readMDArrayFloatData(MDArray data, Float32Member var)
 	{
+		float[] buffer = new float[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], Float32Member> proc =
 				new Procedure3<MDArray, long[], Float32Member>()
 		{
-			private float[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, Float32Member value) {
 
-				if (buffer == null) {
-					buffer = new float[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromFloats(buffer);
 			}
@@ -826,19 +791,15 @@ public class Gdal {
 	
 		readMDArrayDoubleData(MDArray data, Float64Member var)
 	{
+		double[] buffer = new double[1];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], Float64Member> proc =
 				new Procedure3<MDArray, long[], Float64Member>()
 		{
-			private double[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, Float64Member value) {
 
-				if (buffer == null) {
-					buffer = new double[1];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromDoubles(buffer);
 			}
@@ -851,19 +812,15 @@ public class Gdal {
 	
 		readMDArrayComplexFloatData(MDArray data, ComplexFloat32Member var)
 	{
+		float[] buffer = new float[2];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], ComplexFloat32Member> proc =
 				new Procedure3<MDArray, long[], ComplexFloat32Member>()
 		{
-			private float[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, ComplexFloat32Member value) {
 
-				if (buffer == null) {
-					buffer = new float[2];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromFloats(buffer);
 			}
@@ -876,19 +833,15 @@ public class Gdal {
 	
 		readMDArrayComplexDoubleData(MDArray data, ComplexFloat64Member var)
 	{
+		double[] buffer = new double[2];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], ComplexFloat64Member> proc =
 				new Procedure3<MDArray, long[], ComplexFloat64Member>()
 		{
-			private double[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, ComplexFloat64Member value) {
 
-				if (buffer == null) {
-					buffer = new double[2];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromDoubles(buffer);
 			}
@@ -901,19 +854,15 @@ public class Gdal {
 	
 		readMDArrayGaussianShortData(MDArray data, GaussianInt16Member var)
 	{
+		short[] buffer = new short[2];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], GaussianInt16Member> proc =
 				new Procedure3<MDArray, long[], GaussianInt16Member>()
 		{
-			private short[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, GaussianInt16Member value) {
 
-				if (buffer == null) {
-					buffer = new short[2];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromShorts(buffer);
 			}
@@ -926,19 +875,15 @@ public class Gdal {
 	
 		readMDArrayGaussianIntData(MDArray data, GaussianInt32Member var)
 	{
+		int[] buffer = new int[2];
+		long[] ones = ones((int) data.GetDimensionCount());
+
 		Procedure3<MDArray, long[], GaussianInt32Member> proc =
 				new Procedure3<MDArray, long[], GaussianInt32Member>()
 		{
-			private int[] buffer;
-			private long[] ones;
-			
 			@Override
 			public void call(MDArray data, long[] coord, GaussianInt32Member value) {
 
-				if (buffer == null) {
-					buffer = new int[2];
-					ones = ones((int) data.GetDimensionCount());
-				}
 				data.Read(coord, ones, buffer);
 				value.setFromInts(buffer);
 			}
@@ -1296,21 +1241,13 @@ public class Gdal {
 				
 				arr = new long[elemsPerRow * 1];
 
-				// TODO remove exception and uncomment the line after it
-				
-				throw new UnsupportedOperationException("This code won't work until gdal java api jar 3.8.0 has been released");
-
-				//band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
 			}
 			else if (type == gdalconst.GDT_Int64) {
 				
 				arr = new long[elemsPerRow * 1];
 
-				// TODO remove exception and uncomment the line after it
-				
-				throw new UnsupportedOperationException("This code won't work until gdal java api jar 3.8.0 has been released");
-
-				//band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
+				band.ReadRaster(0, row, elemsPerRow, 1, elemsPerRow, 1, band.getDataType(), (long[])arr, 0, 0);
 			}
 			else if (type == gdalconst.GDT_Float32) {
 				
