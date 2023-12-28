@@ -54,6 +54,7 @@ import nom.bdezonia.zorbage.procedure.Procedure2;
 import nom.bdezonia.zorbage.procedure.Procedure3;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
 import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
+import nom.bdezonia.zorbage.sampling.SamplingIterator;
 import nom.bdezonia.zorbage.type.complex.float32.ComplexFloat32Member;
 import nom.bdezonia.zorbage.type.complex.float64.ComplexFloat64Member;
 import nom.bdezonia.zorbage.type.gaussian.int16.GaussianInt16Member;
@@ -76,6 +77,8 @@ import nom.bdezonia.zorbage.type.real.float64.Float64Member;
  */
 public class Gdal {
 
+	private static final int MAXCOLS = 512;
+	
 	/**
 	 * This must be called once at startup by users of this gdal interface package
 	 */
@@ -188,7 +191,7 @@ public class Gdal {
 				data.GetOffset(offsets);
 				
 				for (int k = 0; k < nDim; k++) {
-					System.out.println("  axis "+k+" scale "+scales[k]+" offset "+offsets[k]);
+					System.out.println("  axis "+k+" dim "+data.GetDimension(k).GetSize()+" scale "+scales[k]+" offset "+offsets[k]);
 				}
 
 				System.out.println("  name "+data.GetName());
@@ -201,7 +204,7 @@ public class Gdal {
 				
 				System.out.println("  and has " + data.GetDimensionCount() + " dimensions.");
 				
-				System.out.println("  and structural info:");
+				System.out.println("  any structural info follows here:");
 				
 				Hashtable<String,?> ht = data.GetStructuralInfo();
 				
@@ -508,15 +511,18 @@ public class Gdal {
 		return data;
 	}
 
-	private static long[] ones(int count) {
+	private static long[] ones(long count) {
 		
-		long[] vals = new long[count];
+		if (count > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("too many dimensions!");
+		
+		long[] vals = new long[(int) count];
 		for (int i = 0; i < count; i++) {
 			vals[i] = 1;
 		}
 		return vals;
 	}
-	
+
 	private static <T extends Algebra<T,U>, U extends Allocatable<U>>
 	
 		DimensionedDataSource<U>
@@ -566,6 +572,8 @@ public class Gdal {
 			proc.call(data, gdalCoords, val);
 			
 			output.set(zorbCoords, val);
+			
+			//System.out.println(plork++);
 		}
 		
 		output.setName(data.GetName());
@@ -584,8 +592,18 @@ public class Gdal {
 
 		for (int i = 0; i < dims.length; i++) {
 			
-			bdScales[i] = BigDecimal.valueOf(scales[i]);
-			bdOffsets[i] = BigDecimal.valueOf(offsets[i]);
+			Double scale = scales[i];
+			Double offset = offsets[i];
+			
+			if (scale == null)
+				bdScales[i] = BigDecimal.ONE;
+			else
+				bdScales[i] = BigDecimal.valueOf(scale);
+
+			if (offset == null)
+				bdOffsets[i] = BigDecimal.ZERO;
+			else
+				bdOffsets[i] = BigDecimal.valueOf(offset);
 		}
 		
 		LinearNdCoordinateSpace space = new LinearNdCoordinateSpace(bdScales, bdOffsets);
@@ -596,27 +614,153 @@ public class Gdal {
 		
 		return output;
 	}
-	
+
 	private static DimensionedDataSource<UnsignedInt8Member>
 	
 		readMDArrayUByteData(MDArray data, UnsignedInt8Member var)
 	{
-		byte[] buffer = new byte[1];
-		long[] ones = ones((int) data.GetDimensionCount());
-
-		Procedure3<MDArray, long[], UnsignedInt8Member> proc =
-				new Procedure3<MDArray, long[], UnsignedInt8Member>()
-		{
+		long nd = data.GetDimensionCount();
+		
+		if (nd > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("data has too many dimensions");
+		
+		int numDims = (int) nd;
+		
+		long[] gdalDims = new long[numDims];
+		
+		long[] zorbDims = new long[numDims];
+		
+		for (int i = 0; i < numDims; i++) {
+		
+			gdalDims[i] = data.GetDimension(i).GetSize();
 			
-			@Override
-			public void call(MDArray data, long[] coord, UnsignedInt8Member value) {
+			zorbDims[numDims - 1 - i] = gdalDims[i];
+		}
+		
+		long maxX = gdalDims[numDims-1];
 
-				data.Read(coord, ones, buffer);
-				value.setFromBytes(buffer);
-			}
-		};
+		UnsignedInt8Member val = G.UINT8.construct();
+		
+		DimensionedDataSource<UnsignedInt8Member> output =
 				
-		return readMDArrayData(data, var, proc);
+				DimensionedStorage.allocate(val, zorbDims);
+
+		long[] gdalIdx = new long[numDims];
+		
+		IntegerIndex zorbIdx = new IntegerIndex(numDims);
+		
+		long[] colDims = new long[numDims - 1];
+		
+		for (int i = 0; i < colDims.length; i++) {
+	    	 
+			colDims[i] = gdalDims[i];
+		}
+	    
+		IntegerIndex colIdx = new IntegerIndex(numDims - 1);
+
+		long[] gdalShape = new long[numDims];
+		
+		for (int i = 0; i < numDims; i++) {
+
+			gdalShape[i] = 1;
+		}
+
+		byte[] miniBuff = new byte[1];
+		
+		byte[] buffer = new byte[MAXCOLS];
+		
+		SamplingIterator<IntegerIndex> iter = new SamplingCartesianIntegerGrid(colDims).iterator();
+	    
+		while (iter.hasNext()) {
+			
+			iter.next(colIdx);
+
+			for (int i = 0; i < colIdx.numDimensions(); i++) {
+				
+				gdalIdx[i] = colIdx.get(i);
+			}
+
+			long left = 0;
+		
+			while (left < maxX) {
+				
+				long chunkSize = buffer.length / miniBuff.length;
+				
+				if (left + chunkSize > maxX) {
+				
+					chunkSize = maxX - left;
+				}
+				
+				gdalShape[numDims-1] = chunkSize;
+				
+				data.Read(gdalIdx, gdalShape, buffer);
+				
+				for (int i = 0; i < chunkSize; i++) {
+					
+					gdalIdx[numDims-1] = left + i;
+					
+					if (miniBuff.length == 1) {
+						
+						miniBuff[0] = buffer[i];
+					}
+					else { // miniBuff.length == 2
+						
+						miniBuff[0] = buffer[2*i];
+						
+						miniBuff[1] = buffer[2*i+1];
+					}
+					
+					val.setFromBytes(miniBuff);
+					
+					for (int k = 0; k < numDims; k++) {
+						
+						zorbIdx.set(numDims - 1 - k, gdalIdx[k]); 
+					}
+				
+					output.set(zorbIdx, val);
+				}
+	
+				left += chunkSize;
+			}
+		}
+		
+		output.setName(data.GetName());
+		output.setSource(data.GetFullName());
+		output.setValueUnit(data.GetUnit());
+		output.setValueType("unknown type");
+
+		Double[] scales = new Double[numDims];
+		Double[] offsets = new Double[numDims];
+		
+		data.GetScale(scales);
+		data.GetOffset(offsets);
+		
+		BigDecimal[] bdScales = new BigDecimal[numDims];
+		BigDecimal[] bdOffsets = new BigDecimal[numDims];
+
+		for (int i = 0; i < numDims; i++) {
+			
+			Double scale = scales[i];
+			Double offset = offsets[i];
+			
+			if (scale == null)
+				bdScales[numDims - 1 - i] = BigDecimal.ONE;
+			else
+				bdScales[numDims - 1 - i] = BigDecimal.valueOf(scale);
+
+			if (offset == null)
+				bdOffsets[numDims - 1 - i] = BigDecimal.ZERO;
+			else
+				bdOffsets[numDims - 1 - i] = BigDecimal.valueOf(offset);
+		}
+		
+		LinearNdCoordinateSpace space = new LinearNdCoordinateSpace(bdScales, bdOffsets);
+
+		output.setCoordinateSpace(space);
+		
+		// TODO set more MetaData based upon gdal attributes?????
+		
+		return output;
 	}
 
 	private static DimensionedDataSource<SignedInt8Member>
@@ -624,7 +768,7 @@ public class Gdal {
 		readMDArrayByteData(MDArray data, SignedInt8Member var)
 	{
 		byte[] buffer = new byte[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], SignedInt8Member> proc =
 				new Procedure3<MDArray, long[], SignedInt8Member>()
@@ -648,7 +792,7 @@ public class Gdal {
 				new Procedure3<MDArray, long[], UnsignedInt16Member>()
 		{
 			short[] buffer = new short[1];
-			long[] ones = ones((int) data.GetDimensionCount());
+			long[] ones = ones(data.GetDimensionCount());
 
 			@Override
 			public void call(MDArray data, long[] coord, UnsignedInt16Member value) {
@@ -665,21 +809,164 @@ public class Gdal {
 	
 		readMDArrayShortData(MDArray data, SignedInt16Member var)
 	{
-		short[] buffer = new short[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long nd = data.GetDimensionCount();
+		
+		if (nd > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("data has too many dimensions");
+		
+		int numDims = (int) nd;
+		
+		long[] gdalDims = new long[numDims];
+		
+		long[] zorbDims = new long[numDims];
+		
+		for (int i = 0; i < numDims; i++) {
+		
+			gdalDims[i] = data.GetDimension(i).GetSize();
+			
+			zorbDims[numDims - 1 - i] = gdalDims[i];
+		}
+		
+		long maxX = gdalDims[numDims-1];
 
-		Procedure3<MDArray, long[], SignedInt16Member> proc =
-				new Procedure3<MDArray, long[], SignedInt16Member>()
-		{
-			@Override
-			public void call(MDArray data, long[] coord, SignedInt16Member value) {
+		long maxY = 1;
+		
+		if (numDims > 1) maxY = gdalDims[numDims-2];
 
-				data.Read(coord, ones, buffer);
-				value.setFromShorts(buffer);
-			}
-		};
+		SignedInt16Member val = var.allocate();
+		
+		DimensionedDataSource<SignedInt16Member> output =
 				
-		return readMDArrayData(data, var, proc);
+				DimensionedStorage.allocate(val, zorbDims);
+
+		long[] gdalIdx = new long[numDims];
+		
+		IntegerIndex zorbIdx = new IntegerIndex(numDims);
+		
+		long[] colDims = new long[numDims - 1];
+		
+		for (int i = 0; i < colDims.length; i++) {
+	    	 
+			colDims[i] = gdalDims[i];
+		}
+	    
+		IntegerIndex colIdx = new IntegerIndex(numDims - 1);
+
+		long[] gdalShape = new long[numDims];
+		
+		for (int i = 0; i < numDims; i++) {
+
+			gdalShape[i] = 1;
+		}
+
+		short[] miniBuff = new short[1];
+		
+		short[] buffer = new short[MAXCOLS];
+		
+		SamplingIterator<IntegerIndex> iter = new SamplingCartesianIntegerGrid(colDims).iterator();
+	    
+		while (iter.hasNext()) {
+			
+			iter.next(colIdx);
+
+			for (int i = 0; i < colIdx.numDimensions(); i++) {
+				
+				gdalIdx[i] = colIdx.get(i);
+			}
+
+			long left = 0;
+		
+			while (left < maxX) {
+				
+				long chunkSize = buffer.length / miniBuff.length;
+				
+				if (left + chunkSize > maxX) {
+				
+					chunkSize = maxX - left;
+				}
+				
+				gdalIdx[numDims-1] = left;
+
+				gdalShape[numDims-1] = chunkSize;
+				
+				data.Read(gdalIdx, gdalShape, buffer);
+				
+				for (int i = 0; i < chunkSize; i++) {
+					
+					gdalIdx[numDims-1] = left + i;
+					
+					if (miniBuff.length == 1) {
+						
+						miniBuff[0] = buffer[i];
+					}
+					else { // miniBuff.length == 2
+						
+						miniBuff[0] = buffer[2*i];
+						
+						miniBuff[1] = buffer[2*i+1];
+					}
+					
+					val.setFromShorts(miniBuff);
+					
+					for (int k = 0; k < numDims; k++) {
+
+						// is this the Y dim?
+						
+						if (k == numDims - 2) {
+						
+							// flip it
+							zorbIdx.set(numDims - 1 - k, maxY - 1 - gdalIdx[k]);
+						}
+						else {  // don't flip it
+							
+							zorbIdx.set(numDims - 1 - k, gdalIdx[k]); 
+						}
+					}
+				
+					output.set(zorbIdx, val);
+				}
+	
+				left += chunkSize;
+			}
+		}
+		
+		output.setName(data.GetName());
+		output.setSource(data.GetFullName());
+		output.setValueUnit(data.GetUnit());
+		output.setValueType("unknown type");
+
+		Double[] scales = new Double[numDims];
+		Double[] offsets = new Double[numDims];
+		
+		data.GetScale(scales);
+		data.GetOffset(offsets);
+		
+		BigDecimal[] bdScales = new BigDecimal[numDims];
+		BigDecimal[] bdOffsets = new BigDecimal[numDims];
+
+		for (int i = 0; i < numDims; i++) {
+			
+			Double scale = scales[i];
+			Double offset = offsets[i];
+			
+			if (scale == null)
+				bdScales[numDims - 1 - i] = BigDecimal.ONE;
+			else
+				bdScales[numDims - 1 - i] = BigDecimal.valueOf(scale);
+
+			if (offset == null)
+				bdOffsets[numDims - 1 - i] = BigDecimal.ZERO;
+			else
+				bdOffsets[numDims - 1 - i] = BigDecimal.valueOf(offset);
+		}
+		
+		LinearNdCoordinateSpace space = new LinearNdCoordinateSpace(bdScales, bdOffsets);
+
+		output.setCoordinateSpace(space);
+		
+		// TODO set more MetaData based upon gdal attributes?????
+		
+		return output;
 	}
 
 	private static DimensionedDataSource<UnsignedInt32Member>
@@ -687,7 +974,7 @@ public class Gdal {
 		readMDArrayUIntData(MDArray data, UnsignedInt32Member var)
 	{
 		int[] buffer = new int[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], UnsignedInt32Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt32Member>()
@@ -708,7 +995,7 @@ public class Gdal {
 		readMDArrayIntData(MDArray data, SignedInt32Member var)
 	{
 		int[] buffer = new int[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], SignedInt32Member> proc =
 				new Procedure3<MDArray, long[], SignedInt32Member>()
@@ -729,7 +1016,7 @@ public class Gdal {
 		readMDArrayULongData(MDArray data, UnsignedInt64Member var)
 	{
 		long[] buffer = new long[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], UnsignedInt64Member> proc =
 				new Procedure3<MDArray, long[], UnsignedInt64Member>()
@@ -750,7 +1037,7 @@ public class Gdal {
 		readMDArrayLongData(MDArray data, SignedInt64Member var)
 	{
 		long[] buffer = new long[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], SignedInt64Member> proc =
 				new Procedure3<MDArray, long[], SignedInt64Member>()
@@ -771,7 +1058,7 @@ public class Gdal {
 		readMDArrayFloatData(MDArray data, Float32Member var)
 	{
 		float[] buffer = new float[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], Float32Member> proc =
 				new Procedure3<MDArray, long[], Float32Member>()
@@ -792,7 +1079,7 @@ public class Gdal {
 		readMDArrayDoubleData(MDArray data, Float64Member var)
 	{
 		double[] buffer = new double[1];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], Float64Member> proc =
 				new Procedure3<MDArray, long[], Float64Member>()
@@ -813,7 +1100,7 @@ public class Gdal {
 		readMDArrayComplexFloatData(MDArray data, ComplexFloat32Member var)
 	{
 		float[] buffer = new float[2];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], ComplexFloat32Member> proc =
 				new Procedure3<MDArray, long[], ComplexFloat32Member>()
@@ -834,7 +1121,7 @@ public class Gdal {
 		readMDArrayComplexDoubleData(MDArray data, ComplexFloat64Member var)
 	{
 		double[] buffer = new double[2];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], ComplexFloat64Member> proc =
 				new Procedure3<MDArray, long[], ComplexFloat64Member>()
@@ -855,7 +1142,7 @@ public class Gdal {
 		readMDArrayGaussianShortData(MDArray data, GaussianInt16Member var)
 	{
 		short[] buffer = new short[2];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], GaussianInt16Member> proc =
 				new Procedure3<MDArray, long[], GaussianInt16Member>()
@@ -876,7 +1163,7 @@ public class Gdal {
 		readMDArrayGaussianIntData(MDArray data, GaussianInt32Member var)
 	{
 		int[] buffer = new int[2];
-		long[] ones = ones((int) data.GetDimensionCount());
+		long[] ones = ones(data.GetDimensionCount());
 
 		Procedure3<MDArray, long[], GaussianInt32Member> proc =
 				new Procedure3<MDArray, long[], GaussianInt32Member>()
