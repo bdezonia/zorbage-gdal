@@ -35,7 +35,6 @@ import java.util.Vector;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.Dimension;
 import org.gdal.gdal.Group;
 import org.gdal.gdal.MDArray;
 import org.gdal.gdal.gdal;
@@ -45,7 +44,11 @@ import nom.bdezonia.zorbage.algebra.Algebra;
 import nom.bdezonia.zorbage.algebra.Allocatable;
 import nom.bdezonia.zorbage.algebra.G;
 import nom.bdezonia.zorbage.algebra.SetFromBytes;
+import nom.bdezonia.zorbage.algebra.SetFromShorts;
+import nom.bdezonia.zorbage.algebra.SetFromInts;
+import nom.bdezonia.zorbage.algebra.SetFromLongs;
 import nom.bdezonia.zorbage.algebra.SetFromFloats;
+import nom.bdezonia.zorbage.algebra.SetFromDoubles;
 import nom.bdezonia.zorbage.coordinates.CoordinateSpace;
 import nom.bdezonia.zorbage.coordinates.LinearNdCoordinateSpace;
 import nom.bdezonia.zorbage.data.DimensionedDataSource;
@@ -53,7 +56,6 @@ import nom.bdezonia.zorbage.data.DimensionedStorage;
 import nom.bdezonia.zorbage.dataview.PlaneView;
 import nom.bdezonia.zorbage.misc.DataBundle;
 import nom.bdezonia.zorbage.procedure.Procedure2;
-import nom.bdezonia.zorbage.procedure.Procedure3;
 import nom.bdezonia.zorbage.sampling.IntegerIndex;
 import nom.bdezonia.zorbage.sampling.SamplingCartesianIntegerGrid;
 import nom.bdezonia.zorbage.sampling.SamplingIterator;
@@ -71,6 +73,14 @@ import nom.bdezonia.zorbage.type.integer.int8.SignedInt8Member;
 import nom.bdezonia.zorbage.type.integer.int8.UnsignedInt8Member;
 import nom.bdezonia.zorbage.type.real.float32.Float32Member;
 import nom.bdezonia.zorbage.type.real.float64.Float64Member;
+
+
+// TODO: does the direction in which zorbage defines axis directions
+//   compared to other systems require scales and offsets of Y values
+//   to be reformulated so coord readouts match all other systems?
+//   My code is always flipping Y coords. Doesn't that screw up Y
+//   scaled coordinate readouts? What package could I use to show a
+//   file from something like netcdf with correct coord readouts?
 
 /**
  * 
@@ -513,40 +523,25 @@ public class Gdal {
 		return data;
 	}
 
-	private static long[] ones(long count) {
-		
-		if (count > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("too many dimensions!");
-		
-		long[] vals = new long[(int) count];
-		for (int i = 0; i < count; i++) {
-			vals[i] = 1;
-		}
-		return vals;
-	}
-
-	interface Buffer<U> {
+	private static interface Buffer<U> {
 		
 		void readData(MDArray data, long[] gdalIdx, long[] gdalShape);
-		int numInBuffer();
 		void getVal(int i, U val);
 	}
 	
-	private static <U extends SetFromBytes>
-		class ByteBuffer<U> implements Buffer<U>
+	private static class ByteBuffer<U extends SetFromBytes>
+		implements Buffer<U>
 	{
 		byte[] buffer;
 		byte[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
-		ByteBuffer(int numComponenets) {
+		ByteBuffer(int numComponents) {
 			
-			this.numComponents = numComponenets;
+			this.numComponents = numComponents;
 			this.miniBuff = new byte[numComponents];
 			this.buffer = new byte[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -556,46 +551,35 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromBytes(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
 	
-	private static <U extends SetFromShorts>
-		class ShortBuffer<U> implements Buffer<U>
+	private static class ShortBuffer<U extends SetFromShorts>
+		implements Buffer<U>
 	{
 		short[] buffer;
 		short[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
-		ByteBuffer(int numComponents) {
+		ShortBuffer(int numComponents) {
 			
 			this.numComponents = numComponents;
 			this.miniBuff = new short[numComponents];
 			this.buffer = new short[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -605,46 +589,35 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromShorts(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
 	
-	private static <U extends SetFromInts>
-		class IntBuffer<U> implements Buffer<U>
+	private static class IntBuffer<U extends SetFromInts>
+		implements Buffer<U>
 	{
 		int[] buffer;
 		int[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
-		ByteBuffer(int numComponents) {
+		IntBuffer(int numComponents) {
 			
 			this.numComponents = numComponents;
 			this.miniBuff = new int[numComponents];
 			this.buffer = new int[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -654,38 +627,28 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromInts(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
 	
-	private static <U extends SetFromLongs>
-		class LongBuffer<U> implements Buffer<U>
+	private static class LongBuffer<U extends SetFromLongs>
+		implements Buffer<U>
 	{
 		long[] buffer;
 		long[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
 		LongBuffer(int numComponents) {
@@ -693,7 +656,6 @@ public class Gdal {
 			this.numComponents = numComponents;
 			this.miniBuff = new long[numComponents];
 			this.buffer = new long[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -703,38 +665,28 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromLongs(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
 	
-	private static <U extends SetFromFloats>
-		class FloatBuffer<U> implements Buffer<U>
+	private static class FloatBuffer<U extends SetFromFloats>
+		implements Buffer<U>
 	{
 		float[] buffer;
 		float[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
 		FloatBuffer(int numComponents) {
@@ -742,7 +694,6 @@ public class Gdal {
 			this.numComponents = numComponents;
 			this.miniBuff = new float[numComponents];
 			this.buffer = new float[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -752,38 +703,28 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromFloats(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
 	
-	private static <U extends SetFromDoubles>
-		class DoubleBuffer<U> implements Buffer<U>
+	private static class DoubleBuffer<U extends SetFromDoubles>
+		implements Buffer<U>
 	{
 		double[] buffer;
 		double[] miniBuff;
 		int currIndex;
-		int numInBuffer;
 		int numComponents;
 		
 		DoubleBuffer(int numComponents) {
@@ -791,7 +732,6 @@ public class Gdal {
 			this.numComponents = numComponents;
 			this.miniBuff = new double[numComponents];
 			this.buffer = new double[MAXCOLS * numComponents];
-			this.numInBuffer = -1;
 			this.currIndex = -1;
 		}
 		
@@ -801,27 +741,18 @@ public class Gdal {
 			data.Read(gdalIdx, gdalShape, buffer);
 			
 			currIndex = 0;
-			
-			numInBuffer = (int) gdalShape[gdalShape.length-1];
-		}
-
-		@Override
-		public int numInBuffer() {
-
-			return numInBuffer;
 		}
 
 		@Override
 		public void getVal(int i, U val) {
-			
-			if (i < 0 || i >= numInBuffer)
-				throw new IllegalArgumentException("buffer access out of bounds");
 			
 			for (int k = 0; k < numComponents; k++) {
 				miniBuff[k] = buffer[numComponents*currIndex + k];
 			}
 
 			val.setFromDoubles(miniBuff);
+			
+			currIndex++;
 		}
 		
 	}
@@ -897,7 +828,7 @@ public class Gdal {
 		
 			while (left < maxX) {
 				
-				long chunkSize = buffer.numInBuffer();
+				long chunkSize = MAXCOLS;
 				
 				if (left + chunkSize > maxX) {
 				
@@ -1039,7 +970,7 @@ public class Gdal {
 
 	private static DimensionedDataSource<UnsignedInt64Member>
 	
-		readMDArrayULongData(MDArray data, UnsignedInt64Member var)
+		readMDArrayULongData(MDArray data, UnsignedInt64Member type)
 	{
 		LongBuffer<UnsignedInt64Member> buffer =
 				new LongBuffer<UnsignedInt64Member>(1);
@@ -1049,7 +980,7 @@ public class Gdal {
 
 	private static DimensionedDataSource<SignedInt64Member>
 	
-		readMDArrayLongData(MDArray data, SignedInt64Member var)
+		readMDArrayLongData(MDArray data, SignedInt64Member type)
 	{
 		LongBuffer<SignedInt64Member> buffer =
 				new LongBuffer<SignedInt64Member>(1);
@@ -1109,7 +1040,7 @@ public class Gdal {
 
 	private static DimensionedDataSource<GaussianInt32Member>
 	
-		readMDArrayGaussianIntData(MDArray data, GaussianInt32Member var)
+		readMDArrayGaussianIntData(MDArray data, GaussianInt32Member type)
 	{
 		IntBuffer<GaussianInt32Member> buffer =
 				new IntBuffer<GaussianInt32Member>(2);
