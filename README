@@ -59,4 +59,4 @@ How to include zorbage-gdal in a different build system
 
   See https://search.maven.org/artifact/io.github.bdezonia/zorbage-gdal/0.1.9/jar
   for instructions on how to reference zorbage-gdal in build systems such as
-  Gradle or others. 
+  Gradle or others.
