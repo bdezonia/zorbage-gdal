@@ -147,7 +147,7 @@ public class Gdal {
 	@SuppressWarnings("unchecked")
 	public static DataBundle
 	
-		loadAllDatasets(String filename)
+		readAllDatasets(String filename)
 	{
 		final DataBundle outputs = new DataBundle();
 		
@@ -316,7 +316,7 @@ public class Gdal {
 					if (pair.length != 2)
 						throw new IllegalArgumentException("gdal metadata: too many equal signs in internal filename");
 					
-					DataBundle lowerbundle = loadAllDatasets(pair[1]);
+					DataBundle lowerbundle = readAllDatasets(pair[1]);
 					
 					outputs.mergeAll(lowerbundle);
 					

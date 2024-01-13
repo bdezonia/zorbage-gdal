@@ -73,7 +73,7 @@ public class Main {
 		//String filename = "/home/bdz/images/imagej-samples/TEM_filter_sample.jpg";
 		//String filename = "/home/bdz/images/imagej-samples/Tree_Rings.jpg";
 
-		DataBundle bundle = Gdal.loadAllDatasets(filename);
+		DataBundle bundle = Gdal.readAllDatasets(filename);
 
 		System.out.println(bundle.bundle().size() + " datasets were loaded");
 	}
