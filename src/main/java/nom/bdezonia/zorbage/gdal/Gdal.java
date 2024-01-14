@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -139,15 +140,59 @@ public class Gdal {
 		
 		return 0;
 	}
+
+	/**
+	 * 
+	 * @param fileURI
+	 * @return
+	 */
+	public static
+	
+		DataBundle
+	
+			readAllDatasets(URI fileURI)
+	{
+
+		String scheme = fileURI.getScheme();
+		
+		final String gdalName;
+		
+		if ("file".equals(scheme)) {
+		
+			//System.out.println("FILE SCHEME");
+			
+			gdalName = fileURI.getPath();  // just grab the file name
+		}
+		
+		else if ("ftp".equals(scheme) ||
+					"http".equals(scheme) ||
+					"https".equals(scheme))
+		{
+			//System.out.println("HTTP SCHEME");
+			
+			gdalName = "/vsicurl/" + fileURI.toString();
+		}
+		
+		else {  // make a good faith attempt to load something
+			
+			//System.out.println("UNKNOWN SCHEME "+fileURI.getScheme());
+			
+			gdalName = "/vsicurl/" + fileURI.toString();
+		}
+
+		return readAllDatasets(gdalName);
+	}
 	
 	/**
 	 * 
 	 * @param filename
 	 */
 	@SuppressWarnings("unchecked")
-	public static DataBundle
+	public static
 	
-		readAllDatasets(String filename)
+		DataBundle
+	
+			readAllDatasets(String filename)
 	{
 		final DataBundle outputs = new DataBundle();
 		
@@ -163,7 +208,6 @@ public class Gdal {
 			
 			group = ds.GetRootGroup();
 		}
-
 
 		// let's deal with a multi dim dataset if we can
 		
