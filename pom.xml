@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.bdezonia</groupId>
   <artifactId>zorbage-gdal</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.2.0</version>
   <name>zorbage-gdal</name>
   <description>zorbage-gdal: code for using the GDAL data file loading library to populate data into zorbage structures for further processing</description>
   <url>https://github.com/bdezonia/zorbage-gdal</url>
@@ -133,6 +133,8 @@
           </execution>
         </executions>
       </plugin>
+<!--
+
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -144,8 +146,22 @@
            <autoReleaseAfterClose>true</autoReleaseAfterClose>
         </configuration>
       </plugin>
+
+-->
+
+      <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.6.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <publishingServerId>central</publishingServerId>
+          </configuration>
+        </plugin>
     </plugins>
   </build>
+
+<!--
 
   <distributionManagement>
     <snapshotRepository>
@@ -157,5 +173,7 @@
 	  <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
+
+-->
 
 </project>
